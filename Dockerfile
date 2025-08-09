@@ -1,0 +1,53 @@
+##### DEPENDENCIES
+
+FROM oven/bun:1-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
+WORKDIR /app
+
+# Install dependencies into temp directory
+# this will cache them and speed up future builds
+FROM base AS install
+RUN mkdir -p /temp/dev
+COPY package.json bun.lock /temp/dev/
+RUN cd /temp/dev && bun install --frozen-lockfile
+
+# install with --production (exclude devDependencies)
+RUN mkdir -p /temp/prod
+COPY package.json bun.lock /temp/prod/
+RUN cd /temp/prod && bun install --frozen-lockfile --production
+
+##### BUILDER
+
+FROM base AS prerelease
+ARG DATABASE_URL
+ARG NEXT_PUBLIC_CLIENTVAR
+COPY --from=install /temp/dev/node_modules node_modules
+COPY . .
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN SKIP_ENV_VALIDATION=1 bun run build
+
+##### RUNNER
+
+FROM base AS release
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copy production dependencies and built application
+COPY --from=install /temp/prod/node_modules node_modules
+COPY --from=prerelease /app/next.config.js ./
+COPY --from=prerelease /app/public ./public
+COPY --from=prerelease /app/package.json ./package.json
+COPY --from=prerelease /app/.next/standalone ./
+COPY --from=prerelease /app/.next/static ./.next/static
+
+EXPOSE 3000
+ENV PORT=3000
+
+# Run the app with bun
+USER bun
+CMD ["bun", "run", "server.js"]
