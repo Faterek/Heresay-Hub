@@ -15,6 +15,8 @@ RUN cd /temp/dev && bun install --frozen-lockfile
 RUN mkdir -p /temp/prod
 COPY package.json bun.lock /temp/prod/
 RUN cd /temp/prod && bun install --frozen-lockfile --production
+# Install drizzle-kit for migrations in production
+RUN cd /temp/prod && bun add drizzle-kit
 
 ##### BUILDER
 
@@ -45,9 +47,18 @@ COPY --from=prerelease /app/package.json ./package.json
 COPY --from=prerelease /app/.next/standalone ./
 COPY --from=prerelease /app/.next/static ./.next/static
 
+# Copy drizzle config and migrations
+COPY --from=prerelease /app/drizzle.config.ts ./
+COPY --from=prerelease /app/drizzle ./drizzle
+COPY --from=prerelease /app/src/env.js ./src/env.js
+
+# Copy startup script
+COPY start.sh ./
+RUN chmod +x start.sh
+
 EXPOSE 3000
 ENV PORT=3000
 
-# Run the app with bun
+# Run the app with startup script that includes migrations
 USER bun
-CMD ["bun", "run", "server.js"]
+CMD ["./start.sh"]
