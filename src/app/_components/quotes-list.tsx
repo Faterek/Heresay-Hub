@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "~/trpc/react";
 import { QuoteVoting } from "./quote-voting";
 import type { Quote } from "~/types";
@@ -41,8 +42,27 @@ function formatQuoteDate(
 // Memoized quote card component
 
 export function QuotesList() {
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const [page, setPage] = useState(currentPage);
   const limit = 20;
+
+  // Sync internal state with URL params
+  useEffect(() => {
+    setPage(currentPage);
+  }, [currentPage]);
+
+  const updateUrlPage = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (newPage === 1) {
+      params.delete("page");
+    } else {
+      params.set("page", newPage.toString());
+    }
+    const newUrl = params.toString() ? `?${params.toString()}` : "";
+    router.push(`/quotes${newUrl}`, { scroll: false });
+  };
 
   const {
     data: quotes,
@@ -101,6 +121,7 @@ export function QuotesList() {
               quote={quote}
               isFirst={index === 0}
               isLast={index === quotes.length - 1}
+              currentPage={page}
             />
             {index < quotes.length - 1 && (
               <div className="border-b border-white/20"></div>
@@ -112,7 +133,7 @@ export function QuotesList() {
       {/* Pagination */}
       <div className="mt-8 flex justify-center gap-3">
         <button
-          onClick={() => setPage(Math.max(1, page - 1))}
+          onClick={() => updateUrlPage(Math.max(1, page - 1))}
           disabled={page === 1}
           className="rounded-lg bg-gray-600 px-4 py-2 transition-colors hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-500"
         >
@@ -120,7 +141,7 @@ export function QuotesList() {
         </button>
         <span className="rounded-lg bg-gray-700 px-4 py-2">Page {page}</span>
         <button
-          onClick={() => setPage(page + 1)}
+          onClick={() => updateUrlPage(page + 1)}
           disabled={!quotes || quotes.length < limit}
           className="rounded-lg bg-gray-600 px-4 py-2 transition-colors hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-500"
         >
@@ -135,10 +156,12 @@ const QuoteCard = memo(function QuoteCard({
   quote,
   isFirst,
   isLast,
+  currentPage,
 }: {
   quote: Quote;
   isFirst: boolean;
   isLast: boolean;
+  currentPage: number;
 }) {
   const roundedClasses = isFirst
     ? "rounded-t-lg"
@@ -146,12 +169,14 @@ const QuoteCard = memo(function QuoteCard({
       ? "rounded-b-lg"
       : "";
 
+  const preservePageUrl = currentPage > 1 ? `?page=${currentPage}` : "";
+
   return (
     <div
       className={`bg-white/10 p-6 transition-colors hover:bg-white/15 ${roundedClasses}`}
     >
       {/* Quote Content - clickable area for quote details */}
-      <Link href={`/quotes/${quote.id}`}>
+      <Link href={`/quotes/${quote.id}${preservePageUrl}`}>
         <div className="cursor-pointer">
           <blockquote className="mb-4 text-lg italic">
             &ldquo;{quote.content}&rdquo;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
@@ -20,6 +20,7 @@ interface SearchFilters {
 function SearchContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [filters, setFilters] = useState<SearchFilters>({
     query: searchParams.get("q") ?? "",
     speakerId: undefined,
@@ -28,9 +29,30 @@ function SearchContent() {
     quoteDateTo: undefined,
     includeUnknownDates: true,
   });
-  const [currentPage, setCurrentPage] = useState(1);
+  const currentPageParam = parseInt(searchParams.get("page") ?? "1", 10);
+  const [currentPage, setCurrentPage] = useState(currentPageParam);
   const [triggerSearch, setTriggerSearch] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync pagination state with URL
+  useEffect(() => {
+    const urlPage = parseInt(searchParams.get("page") ?? "1", 10);
+    if (urlPage !== currentPage) {
+      setCurrentPage(urlPage);
+    }
+  }, [searchParams, currentPage]);
+
+  // Update URL when page changes
+  const updatePageInUrl = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (newPage === 1) {
+      params.delete("page");
+    } else {
+      params.set("page", newPage.toString());
+    }
+    const newUrl = params.toString() ? `?${params.toString()}` : "";
+    router.push(`/search${newUrl}`, { scroll: false });
+  };
 
   // Memoize hasActiveSearch to prevent unnecessary re-calculations
   const hasActiveSearch = useMemo(
@@ -109,7 +131,7 @@ function SearchContent() {
     value: string | number | Date | boolean | undefined,
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
+    updatePageInUrl(1); // Reset to first page when filters change
   };
 
   const formatQuoteDate = (date: string | null, precision: string | null) => {
@@ -395,53 +417,70 @@ function SearchContent() {
 
                 {/* Results List */}
                 <div className="space-y-4">
-                  {searchQuery.data.quotes.map((quote) => (
-                    <Link
-                      key={quote.id}
-                      href={`/quotes/${quote.id}`}
-                      className="block rounded-lg border border-white/10 bg-white/5 p-6 transition-colors hover:border-white/20 hover:bg-white/10"
-                    >
-                      <div className="mb-4">
-                        <p className="text-lg leading-relaxed text-white">
-                          &ldquo;{quote.content}&rdquo;
-                        </p>
-                        {quote.context && (
-                          <div className="mt-3 rounded-md border-l-2 border-purple-500/50 bg-white/5 p-3">
-                            <p className="text-sm text-gray-400 italic">
-                              Context: {quote.context}
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                  {searchQuery.data.quotes.map((quote) => {
+                    // Preserve search context in quote link
+                    const preserveSearchUrl = new URLSearchParams();
+                    if (searchParams.get("q"))
+                      preserveSearchUrl.set("from_search", "true");
+                    if (searchParams.get("q"))
+                      preserveSearchUrl.set("q", searchParams.get("q")!);
+                    if (currentPage > 1)
+                      preserveSearchUrl.set(
+                        "search_page",
+                        currentPage.toString(),
+                      );
+                    const searchUrlString = preserveSearchUrl.toString()
+                      ? `?${preserveSearchUrl.toString()}`
+                      : "";
 
-                      <div className="flex flex-wrap items-center gap-4 text-sm">
-                        <span className="font-medium text-purple-300">
-                          {quote.quoteSpeakers?.map((qs, index) => (
-                            <span key={qs.speaker.id}>
-                              {index > 0 && ", "}— {qs.speaker.name}
-                            </span>
-                          ))}
-                        </span>
-                        <span className="text-gray-400">
-                          {formatQuoteDate(
-                            quote.quoteDate ?? null,
-                            quote.quoteDatePrecision,
+                    return (
+                      <Link
+                        key={quote.id}
+                        href={`/quotes/${quote.id}${searchUrlString}`}
+                        className="block rounded-lg border border-white/10 bg-white/5 p-6 transition-colors hover:border-white/20 hover:bg-white/10"
+                      >
+                        <div className="mb-4">
+                          <p className="text-lg leading-relaxed text-white">
+                            &ldquo;{quote.content}&rdquo;
+                          </p>
+                          {quote.context && (
+                            <div className="mt-3 rounded-md border-l-2 border-purple-500/50 bg-white/5 p-3">
+                              <p className="text-sm text-gray-400 italic">
+                                Context: {quote.context}
+                              </p>
+                            </div>
                           )}
-                        </span>
-                        <span className="text-gray-400">
-                          Submitted by{" "}
-                          <span className="text-gray-300">
-                            {quote.submittedBy.name}
-                          </span>
-                        </span>
-                        <span className="text-gray-500">
-                          {format(new Date(quote.createdAt), "MMM d, yyyy")}
-                        </span>
-                      </div>
+                        </div>
 
-                      {/* Search score for debugging - removing for now */}
-                    </Link>
-                  ))}
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                          <span className="font-medium text-purple-300">
+                            {quote.quoteSpeakers?.map((qs, index) => (
+                              <span key={qs.speaker.id}>
+                                {index > 0 && ", "}— {qs.speaker.name}
+                              </span>
+                            ))}
+                          </span>
+                          <span className="text-gray-400">
+                            {formatQuoteDate(
+                              quote.quoteDate ?? null,
+                              quote.quoteDatePrecision,
+                            )}
+                          </span>
+                          <span className="text-gray-400">
+                            Submitted by{" "}
+                            <span className="text-gray-300">
+                              {quote.submittedBy.name}
+                            </span>
+                          </span>
+                          <span className="text-gray-500">
+                            {format(new Date(quote.createdAt), "MMM d, yyyy")}
+                          </span>
+                        </div>
+
+                        {/* Search score for debugging - removing for now */}
+                      </Link>
+                    );
+                  })}
                 </div>
 
                 {/* Pagination */}
@@ -449,7 +488,7 @@ function SearchContent() {
                   <div className="mt-8 flex items-center justify-center space-x-2 border-t border-white/10 pt-6">
                     <button
                       onClick={() =>
-                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                        updatePageInUrl(Math.max(1, currentPage - 1))
                       }
                       disabled={!searchQuery.data.pagination?.hasPreviousPage}
                       className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/10"
@@ -477,7 +516,7 @@ function SearchContent() {
                           return (
                             <button
                               key={pageNum}
-                              onClick={() => setCurrentPage(pageNum)}
+                              onClick={() => updatePageInUrl(pageNum)}
                               className={`rounded-lg px-3 py-2 text-sm transition-colors ${
                                 pageNum === currentPage
                                   ? "bg-purple-600 text-white"
@@ -492,7 +531,7 @@ function SearchContent() {
                     </div>
 
                     <button
-                      onClick={() => setCurrentPage((prev) => prev + 1)}
+                      onClick={() => updatePageInUrl(currentPage + 1)}
                       disabled={!searchQuery.data.pagination?.hasNextPage}
                       className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/10"
                     >
