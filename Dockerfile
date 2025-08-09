@@ -58,6 +58,9 @@ COPY --from=prerelease /app/tsconfig.json ./tsconfig.json
 COPY start.sh ./
 RUN chmod +x start.sh
 
+# Ensure proper ownership of .next directory for the bun user
+RUN chown -R bun:bun /app/.next
+
 EXPOSE 3000
 ENV PORT=3000
 
