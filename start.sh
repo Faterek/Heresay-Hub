@@ -4,7 +4,7 @@
 set -e
 
 echo "Running database migrations..."
-bun run db:migrate
+npm run db:migrate
 
 echo "Starting the application..."
-exec bun run server.js
+exec node server.js

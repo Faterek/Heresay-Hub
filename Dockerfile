@@ -17,6 +17,8 @@ COPY package.json bun.lock /temp/prod/
 RUN cd /temp/prod && bun install --frozen-lockfile --production
 # Install drizzle-kit and typescript for migrations in production
 RUN cd /temp/prod && bun add drizzle-kit typescript
+# Ensure node_modules/.bin has the correct permissions for Node.js runtime
+RUN cd /temp/prod && chmod +x node_modules/.bin/*
 
 ##### BUILDER
 
@@ -33,8 +35,11 @@ RUN SKIP_ENV_VALIDATION=1 bun run build
 
 ##### RUNNER
 
-FROM base AS release
+FROM node:20-alpine AS release
 WORKDIR /app
+
+# Install necessary packages for Node.js runtime
+RUN apk add --no-cache libc6-compat openssl
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -62,6 +67,6 @@ EXPOSE 3000
 ENV PORT=3000
 
 # Run the app with startup script that includes migrations
-RUN chown -R bun:bun /app   
-USER bun
+RUN chown -R node:node /app   
+USER node
 CMD ["./start.sh"]
