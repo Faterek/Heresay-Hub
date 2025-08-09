@@ -1,24 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
-interface Quote {
-  id: number;
-  content: string;
-  context?: string | null;
-  quoteDate?: string | null;
-  quoteDatePrecision?: string | null;
-  speakerId: number;
-  submittedById: string;
-  createdAt: Date;
-  updatedAt?: Date | null;
-  speaker: {
-    name: string;
-  };
-  submittedBy?: {
-    name: string | null;
-  };
-}
+import type { Quote } from "~/types";
 
 interface QuoteCardProps {
   quote: Quote;
@@ -77,19 +60,24 @@ export function QuoteCard({ quote, showSubmittedBy = true }: QuoteCardProps) {
     }
   };
 
+  // Extract speakers from the new schema structure
+  const speakers =
+    quote.quoteSpeakers?.map((qs) => qs.speaker) ?? quote.speakers ?? [];
+  const speakerNames = speakers.map((s) => s.name).join(" & ");
+
   return (
     <div className="rounded-lg border border-white/10 bg-white/5 p-6 transition-colors hover:bg-white/10">
       {/* Quote Content - clickable area for quote details */}
       <Link href={`/quotes/${quote.id}`} className="block">
         <div className="cursor-pointer">
-          <blockquote className="mb-4 text-lg text-gray-100 italic">
+          <blockquote className="mb-4 text-lg italic text-gray-100">
             &ldquo;{quote.content}&rdquo;
           </blockquote>
 
           {/* Speaker and Date */}
           <div className="mb-3 flex items-center justify-between">
             <span className="font-medium text-purple-300">
-              — {quote.speaker.name}
+              — {speakerNames || "Unknown Speaker"}
             </span>
             {quote.quoteDate && (
               <span className="text-sm text-gray-400">

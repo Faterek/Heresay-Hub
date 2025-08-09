@@ -42,7 +42,7 @@ interface RankedQuote {
   quoteDate?: string | null;
   quoteDatePrecision?: string | null;
   createdAt: Date;
-  speaker: { name: string };
+  speakers: { id: number; name: string }[];
   submittedBy: { name: string | null };
   upvotes: number;
   downvotes: number;
@@ -163,14 +163,18 @@ function YearSection({ year, isExpanded = false }: YearSectionProps) {
                 </div>
               </div>
 
-              <blockquote className="mb-3 text-base text-white italic">
+              <blockquote className="mb-3 text-base italic text-white">
                 &ldquo;{quote.content}&rdquo;
               </blockquote>
 
               <div className="flex flex-col gap-1 text-sm text-gray-300">
                 <div>
                   <span className="font-medium text-white">
-                    — {quote.speaker.name}
+                    {quote.speakers.map((speaker, index) => (
+                      <span key={speaker.id}>
+                        {index > 0 && ", "}— {speaker.name}
+                      </span>
+                    ))}
                     {quote.quoteDate &&
                       quote.quoteDatePrecision !== "unknown" && (
                         <span className="text-gray-400">

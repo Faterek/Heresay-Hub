@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { eq, and, sql, or, gte, lte } from "drizzle-orm";
+import { eq, and, sql, or, gte, lte, inArray } from "drizzle-orm";
 import Fuse from "fuse.js";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { quotes } from "~/server/db/schema";
+import { quotes, quoteSpeakers } from "~/server/db/schema";
 
 export const searchRouter = createTRPCRouter({
   searchQuotes: protectedProcedure
@@ -35,8 +35,21 @@ export const searchRouter = createTRPCRouter({
       // Build base query conditions
       const conditions = [];
 
+      // Handle speaker filtering with the new junction table approach
+      let quotesToInclude: number[] | undefined;
       if (speakerId) {
-        conditions.push(eq(quotes.speakerId, speakerId));
+        // First, get all quote IDs that have this speaker
+        const quotesWithSpeaker = await ctx.db
+          .select({ quoteId: quoteSpeakers.quoteId })
+          .from(quoteSpeakers)
+          .where(eq(quoteSpeakers.speakerId, speakerId));
+
+        quotesToInclude = quotesWithSpeaker.map((q) => q.quoteId);
+
+        // If no quotes found with this speaker, return empty result
+        if (quotesToInclude.length === 0) {
+          return { quotes: [], total: 0 };
+        }
       }
 
       if (submittedById) {
@@ -76,6 +89,11 @@ export const searchRouter = createTRPCRouter({
         conditions.push(sql`${quotes.quoteDate} IS NOT NULL`);
       }
 
+      // Add speaker filtering condition if specified
+      if (quotesToInclude && quotesToInclude.length > 0) {
+        conditions.push(inArray(quotes.id, quotesToInclude));
+      }
+
       // First, get all quotes that match our filters
       const filteredQuotes = await ctx.db.query.quotes.findMany({
         where: conditions.length > 0 ? and(...conditions) : undefined,
@@ -86,15 +104,19 @@ export const searchRouter = createTRPCRouter({
           context: true,
           quoteDate: true,
           quoteDatePrecision: true,
-          speakerId: true,
           submittedById: true,
           createdAt: true,
           updatedAt: true,
         },
         with: {
-          speaker: {
-            columns: {
-              name: true,
+          quoteSpeakers: {
+            with: {
+              speaker: {
+                columns: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           submittedBy: {
@@ -109,11 +131,19 @@ export const searchRouter = createTRPCRouter({
       let searchResults = filteredQuotes;
 
       if (query.trim().length > 0) {
-        const fuse = new Fuse(filteredQuotes, {
+        // Transform quotes to include speaker names for search
+        const searchableQuotes = filteredQuotes.map((quote) => ({
+          ...quote,
+          speakerNames: quote.quoteSpeakers
+            .map((qs) => qs.speaker.name)
+            .join(" "),
+        }));
+
+        const fuse = new Fuse(searchableQuotes, {
           keys: [
             { name: "content", weight: 0.7 },
             { name: "context", weight: 0.2 },
-            { name: "speaker.name", weight: 0.1 },
+            { name: "speakerNames", weight: 0.1 },
           ],
           threshold: 0.4, // More lenient fuzzy matching
           includeScore: true,

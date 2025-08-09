@@ -1,8 +1,13 @@
 import { z } from "zod";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, inArray } from "drizzle-orm";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { quotes, quoteVotes } from "~/server/db/schema";
+import {
+  quotes,
+  quoteVotes,
+  quoteSpeakers,
+  speakers,
+} from "~/server/db/schema";
 
 export const quoteRouter = createTRPCRouter({
   getAll: protectedProcedure
@@ -28,15 +33,19 @@ export const quoteRouter = createTRPCRouter({
           context: true,
           quoteDate: true,
           quoteDatePrecision: true,
-          speakerId: true,
           submittedById: true,
           createdAt: true,
           updatedAt: true,
         },
         with: {
-          speaker: {
-            columns: {
-              name: true,
+          quoteSpeakers: {
+            with: {
+              speaker: {
+                columns: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           submittedBy: {
@@ -59,15 +68,19 @@ export const quoteRouter = createTRPCRouter({
         context: true,
         quoteDate: true,
         quoteDatePrecision: true,
-        speakerId: true,
         submittedById: true,
         createdAt: true,
         updatedAt: true,
       },
       with: {
-        speaker: {
-          columns: {
-            name: true,
+        quoteSpeakers: {
+          with: {
+            speaker: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         submittedBy: {
@@ -92,15 +105,19 @@ export const quoteRouter = createTRPCRouter({
           context: true,
           quoteDate: true,
           quoteDatePrecision: true,
-          speakerId: true,
           submittedById: true,
           createdAt: true,
           updatedAt: true,
         },
         with: {
-          speaker: {
-            columns: {
-              name: true,
+          quoteSpeakers: {
+            with: {
+              speaker: {
+                columns: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           submittedBy: {
@@ -123,7 +140,7 @@ export const quoteRouter = createTRPCRouter({
         quoteDatePrecision: z
           .enum(["full", "year-month", "year", "unknown"])
           .default("unknown"),
-        speakerId: z.number(),
+        speakerIds: z.array(z.number()).min(1).max(10), // Support multiple speakers, max 10
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -144,19 +161,36 @@ export const quoteRouter = createTRPCRouter({
         }
       }
 
-      const [newQuote] = await ctx.db
-        .insert(quotes)
-        .values({
-          content: input.content,
-          context: input.context,
-          quoteDate: formattedDate,
-          quoteDatePrecision: input.quoteDatePrecision,
-          speakerId: input.speakerId,
-          submittedById: ctx.session.user.id,
-        })
-        .returning();
+      // Start a transaction to ensure data consistency
+      const result = await ctx.db.transaction(async (tx) => {
+        // Create the quote first
+        const [newQuote] = await tx
+          .insert(quotes)
+          .values({
+            content: input.content,
+            context: input.context,
+            quoteDate: formattedDate,
+            quoteDatePrecision: input.quoteDatePrecision,
+            submittedById: ctx.session.user.id,
+          })
+          .returning();
 
-      return newQuote;
+        if (!newQuote) {
+          throw new Error("Failed to create quote");
+        }
+
+        // Create quote-speaker relationships
+        const quoteSpeakerValues = input.speakerIds.map((speakerId) => ({
+          quoteId: newQuote.id,
+          speakerId,
+        }));
+
+        await tx.insert(quoteSpeakers).values(quoteSpeakerValues);
+
+        return newQuote;
+      });
+
+      return result;
     }),
 
   update: protectedProcedure
@@ -169,7 +203,7 @@ export const quoteRouter = createTRPCRouter({
         quoteDatePrecision: z
           .enum(["full", "year-month", "year", "unknown"])
           .default("unknown"),
-        speakerId: z.number(),
+        speakerIds: z.array(z.number()).min(1).max(10), // Support multiple speakers
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -207,19 +241,41 @@ export const quoteRouter = createTRPCRouter({
         }
       }
 
-      const [updatedQuote] = await ctx.db
-        .update(quotes)
-        .set({
-          content: input.content,
-          context: input.context,
-          quoteDate: formattedDate,
-          quoteDatePrecision: input.quoteDatePrecision,
-          speakerId: input.speakerId,
-        })
-        .where(eq(quotes.id, input.id))
-        .returning();
+      // Use transaction to ensure data consistency
+      const result = await ctx.db.transaction(async (tx) => {
+        // Update the quote
+        const [updatedQuote] = await tx
+          .update(quotes)
+          .set({
+            content: input.content,
+            context: input.context,
+            quoteDate: formattedDate,
+            quoteDatePrecision: input.quoteDatePrecision,
+          })
+          .where(eq(quotes.id, input.id))
+          .returning();
 
-      return updatedQuote;
+        if (!updatedQuote) {
+          throw new Error("Failed to update quote");
+        }
+
+        // Update speakers - delete existing relationships and create new ones
+        await tx
+          .delete(quoteSpeakers)
+          .where(eq(quoteSpeakers.quoteId, input.id));
+
+        // Create new quote-speaker relationships
+        const quoteSpeakerValues = input.speakerIds.map((speakerId) => ({
+          quoteId: input.id,
+          speakerId,
+        }));
+
+        await tx.insert(quoteSpeakers).values(quoteSpeakerValues);
+
+        return updatedQuote;
+      });
+
+      return result;
     }),
 
   delete: protectedProcedure
@@ -251,9 +307,14 @@ export const quoteRouter = createTRPCRouter({
       where: eq(quotes.submittedById, ctx.session.user.id),
       orderBy: (quotes, { desc }) => [desc(quotes.createdAt)],
       with: {
-        speaker: {
-          columns: {
-            name: true,
+        quoteSpeakers: {
+          with: {
+            speaker: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -407,9 +468,14 @@ export const quoteRouter = createTRPCRouter({
       const yearQuotes = await ctx.db.query.quotes.findMany({
         where: sql`EXTRACT(YEAR FROM ${quotes.createdAt}) = ${year}`,
         with: {
-          speaker: {
-            columns: {
-              name: true,
+          quoteSpeakers: {
+            with: {
+              speaker: {
+                columns: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           submittedBy: {
@@ -425,12 +491,15 @@ export const quoteRouter = createTRPCRouter({
       const rankedQuotes = yearQuotes
         .map((quote) => {
           const upvotes = quote.votes.filter(
-            (v) => v.voteType === "upvote",
+            (v: { voteType: string }) => v.voteType === "upvote",
           ).length;
           const downvotes = quote.votes.filter(
-            (v) => v.voteType === "downvote",
+            (v: { voteType: string }) => v.voteType === "downvote",
           ).length;
           const netScore = upvotes - downvotes;
+
+          // Extract speaker information from the new structure
+          const speakers = quote.quoteSpeakers.map((qs) => qs.speaker);
 
           return {
             id: quote.id,
@@ -438,10 +507,9 @@ export const quoteRouter = createTRPCRouter({
             context: quote.context,
             quoteDate: quote.quoteDate,
             quoteDatePrecision: quote.quoteDatePrecision,
-            speakerId: quote.speakerId,
             submittedById: quote.submittedById,
             createdAt: quote.createdAt,
-            speaker: quote.speaker,
+            speakers,
             submittedBy: quote.submittedBy,
             upvotes,
             downvotes,

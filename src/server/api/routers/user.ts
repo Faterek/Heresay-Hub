@@ -99,15 +99,19 @@ export const userRouter = createTRPCRouter({
           context: true,
           quoteDate: true,
           quoteDatePrecision: true,
-          speakerId: true,
           submittedById: true,
           createdAt: true,
           updatedAt: true,
         },
         with: {
-          speaker: {
-            columns: {
-              name: true,
+          quoteSpeakers: {
+            with: {
+              speaker: {
+                columns: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           submittedBy: {
@@ -204,15 +208,19 @@ export const userRouter = createTRPCRouter({
           context: true,
           quoteDate: true,
           quoteDatePrecision: true,
-          speakerId: true,
           submittedById: true,
           createdAt: true,
           updatedAt: true,
         },
         with: {
-          speaker: {
-            columns: {
-              name: true,
+          quoteSpeakers: {
+            with: {
+              speaker: {
+                columns: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },

@@ -71,7 +71,8 @@ function SearchContent() {
     if (urlQuery && urlQuery !== filters.query) {
       setFilters((prev) => ({ ...prev, query: urlQuery }));
     }
-  }, [searchParams, filters.query]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Auto-search with debounce for all filter changes
   useEffect(() => {
@@ -369,7 +370,7 @@ function SearchContent() {
                   <p className="text-sm text-gray-300">
                     Found{" "}
                     <span className="font-medium text-white">
-                      {searchQuery.data.pagination.totalResults}
+                      {searchQuery.data.pagination?.totalResults ?? 0}
                     </span>{" "}
                     result(s)
                     {filters.query.trim() && (
@@ -382,11 +383,11 @@ function SearchContent() {
                         &rdquo;
                       </span>
                     )}
-                    {searchQuery.data.pagination.totalPages > 1 && (
+                    {(searchQuery.data.pagination?.totalPages ?? 0) > 1 && (
                       <span>
                         {" "}
                         • Page {currentPage} of{" "}
-                        {searchQuery.data.pagination.totalPages}
+                        {searchQuery.data.pagination?.totalPages}
                       </span>
                     )}
                   </p>
@@ -395,9 +396,10 @@ function SearchContent() {
                 {/* Results List */}
                 <div className="space-y-4">
                   {searchQuery.data.quotes.map((quote) => (
-                    <div
+                    <Link
                       key={quote.id}
-                      className="group rounded-lg border border-white/10 bg-white/5 p-6 transition-colors hover:bg-white/10"
+                      href={`/quotes/${quote.id}`}
+                      className="block rounded-lg border border-white/10 bg-white/5 p-6 transition-colors hover:border-white/20 hover:bg-white/10"
                     >
                       <div className="mb-4">
                         <p className="text-lg leading-relaxed text-white">
@@ -414,7 +416,11 @@ function SearchContent() {
 
                       <div className="flex flex-wrap items-center gap-4 text-sm">
                         <span className="font-medium text-purple-300">
-                          — {quote.speaker.name}
+                          {quote.quoteSpeakers?.map((qs, index) => (
+                            <span key={qs.speaker.id}>
+                              {index > 0 && ", "}— {qs.speaker.name}
+                            </span>
+                          ))}
                         </span>
                         <span className="text-gray-400">
                           {formatQuoteDate(
@@ -434,18 +440,18 @@ function SearchContent() {
                       </div>
 
                       {/* Search score for debugging - removing for now */}
-                    </div>
+                    </Link>
                   ))}
                 </div>
 
                 {/* Pagination */}
-                {searchQuery.data.pagination.totalPages > 1 && (
+                {(searchQuery.data.pagination?.totalPages ?? 0) > 1 && (
                   <div className="mt-8 flex items-center justify-center space-x-2 border-t border-white/10 pt-6">
                     <button
                       onClick={() =>
                         setCurrentPage((prev) => Math.max(1, prev - 1))
                       }
-                      disabled={!searchQuery.data.pagination.hasPreviousPage}
+                      disabled={!searchQuery.data.pagination?.hasPreviousPage}
                       className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/10"
                     >
                       Previous
@@ -457,14 +463,14 @@ function SearchContent() {
                         {
                           length: Math.min(
                             5,
-                            searchQuery.data.pagination.totalPages,
+                            searchQuery.data.pagination?.totalPages ?? 0,
                           ),
                         },
                         (_, i) => {
                           const pageNum = Math.max(
                             1,
                             Math.min(
-                              searchQuery.data.pagination.totalPages,
+                              searchQuery.data.pagination?.totalPages ?? 0,
                               currentPage - 2 + i,
                             ),
                           );
@@ -487,7 +493,7 @@ function SearchContent() {
 
                     <button
                       onClick={() => setCurrentPage((prev) => prev + 1)}
-                      disabled={!searchQuery.data.pagination.hasNextPage}
+                      disabled={!searchQuery.data.pagination?.hasNextPage}
                       className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/10"
                     >
                       Next

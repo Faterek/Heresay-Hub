@@ -11,7 +11,7 @@ export function SubmitQuoteForm() {
   const [quoteDatePrecision, setQuoteDatePrecision] = useState<
     "full" | "year-month" | "year" | "unknown"
   >("unknown");
-  const [speakerId, setSpeakerId] = useState<number | null>(null);
+  const [speakerIds, setSpeakerIds] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
@@ -43,7 +43,7 @@ export function SubmitQuoteForm() {
       setContext("");
       setQuoteDate("");
       setQuoteDatePrecision("unknown");
-      setSpeakerId(null);
+      setSpeakerIds([]);
       setIsSubmitting(false);
 
       router.push("/quotes");
@@ -61,7 +61,7 @@ export function SubmitQuoteForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!content.trim() || !speakerId) {
+    if (!content.trim() || speakerIds.length === 0) {
       return;
     }
 
@@ -72,11 +72,11 @@ export function SubmitQuoteForm() {
       context: context.trim() || undefined,
       quoteDate: quoteDate ? new Date(quoteDate) : undefined,
       quoteDatePrecision,
-      speakerId,
+      speakerIds: speakerIds,
     });
   };
 
-  const isFormValid = content.trim().length > 0 && speakerId !== null;
+  const isFormValid = content.trim().length > 0 && speakerIds.length > 0;
 
   return (
     <div className="rounded-lg bg-white/10 p-6">
@@ -244,36 +244,78 @@ export function SubmitQuoteForm() {
 
         {/* Speaker Selection */}
         <div>
-          <label htmlFor="speaker" className="mb-2 block text-lg font-medium">
-            Speaker
-          </label>
+          <label className="mb-2 block text-lg font-medium">Speakers</label>
           {speakersLoading ? (
             <div className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-gray-400">
               Loading speakers...
             </div>
           ) : (
-            <select
-              id="speaker"
-              value={speakerId ?? ""}
-              onChange={(e) =>
-                setSpeakerId(e.target.value ? parseInt(e.target.value) : null)
-              }
-              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
-            >
-              <option value="" className="bg-gray-800">
-                Select a speaker...
-              </option>
-              {speakers?.map((speaker) => (
-                <option
-                  key={speaker.id}
-                  value={speaker.id}
-                  className="bg-gray-800"
-                >
-                  {speaker.name}
+            <>
+              {/* Selected Speakers */}
+              {speakerIds.length > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-sm text-gray-300">
+                    Selected speakers:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {speakerIds.map((id) => {
+                      const speaker = speakers?.find((s) => s.id === id);
+                      return speaker ? (
+                        <div
+                          key={id}
+                          className="flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-600/20 px-3 py-1 text-sm"
+                        >
+                          <span>{speaker.name}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSpeakerIds((prev) =>
+                                prev.filter((speakerId) => speakerId !== id),
+                              )
+                            }
+                            className="text-purple-300 transition-colors hover:text-white"
+                            aria-label={`Remove ${speaker.name}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Speaker Selection Dropdown */}
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const speakerId = parseInt(e.target.value);
+                    if (!speakerIds.includes(speakerId)) {
+                      setSpeakerIds((prev) => [...prev, speakerId]);
+                    }
+                  }
+                }}
+                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="" className="bg-gray-800">
+                  {speakerIds.length === 0
+                    ? "Select speakers..."
+                    : "Add another speaker..."}
                 </option>
-              ))}
-            </select>
+                {speakers
+                  ?.filter((speaker) => !speakerIds.includes(speaker.id))
+                  .map((speaker) => (
+                    <option
+                      key={speaker.id}
+                      value={speaker.id}
+                      className="bg-gray-800"
+                    >
+                      {speaker.name}
+                    </option>
+                  ))}
+              </select>
+            </>
           )}
           <p className="mt-1 text-sm text-gray-400">
             Don&apos;t see the speaker you&apos;re looking for?{" "}

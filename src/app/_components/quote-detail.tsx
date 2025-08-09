@@ -48,7 +48,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
   const [editQuoteDatePrecision, setEditQuoteDatePrecision] = useState<
     "full" | "year-month" | "year" | "unknown"
   >("unknown");
-  const [editSpeakerId, setEditSpeakerId] = useState<number | null>(null);
+  const [editSpeakerIds, setEditSpeakerIds] = useState<number[]>([]);
 
   const router = useRouter();
   const { data: session } = useSession();
@@ -91,7 +91,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
             context: newData.context ?? null,
             quoteDate: newData.quoteDate?.toISOString().split("T")[0] ?? null,
             quoteDatePrecision: newData.quoteDatePrecision ?? null,
-            speakerId: newData.speakerId,
+            // Note: speakerIds is handled server-side and will be refreshed
           },
         );
       }
@@ -183,13 +183,15 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
         setEditQuoteDate("");
       }
 
-      setEditSpeakerId(quote.speakerId);
+      // Extract speaker IDs from the new schema structure
+      const speakerIds = quote.quoteSpeakers?.map((qs) => qs.speakerId) ?? [];
+      setEditSpeakerIds(speakerIds);
       setIsEditing(true);
     }
   };
 
   const handleSave = () => {
-    if (!editContent.trim() || !editSpeakerId) return;
+    if (!editContent.trim() || editSpeakerIds.length === 0) return;
 
     let dateToSend: Date | undefined;
     if (editQuoteDate && editQuoteDatePrecision !== "unknown") {
@@ -212,7 +214,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
       context: editContext.trim() || undefined,
       quoteDate: dateToSend,
       quoteDatePrecision: editQuoteDatePrecision,
-      speakerId: editSpeakerId,
+      speakerIds: editSpeakerIds,
     });
   };
 
@@ -232,7 +234,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
     setEditContext("");
     setEditQuoteDate("");
     setEditQuoteDatePrecision("unknown");
-    setEditSpeakerId(null);
+    setEditSpeakerIds([]);
   };
 
   // Check permissions
@@ -287,7 +289,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
               id="edit-content"
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="h-32 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              className="h-32 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               maxLength={2000}
               required
             />
@@ -311,7 +313,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
               id="edit-context"
               value={editContext}
               onChange={(e) => setEditContext(e.target.value)}
-              className="h-24 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              className="h-24 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               maxLength={1000}
             />
             <div className="mt-1 text-right text-sm text-gray-400">
@@ -405,7 +407,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
                 max="2100"
                 value={editQuoteDate}
                 onChange={(e) => setEditQuoteDate(e.target.value)}
-                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             )}
 
@@ -415,7 +417,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
                 id="edit-quoteDate"
                 value={editQuoteDate}
                 onChange={(e) => setEditQuoteDate(e.target.value)}
-                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             )}
 
@@ -425,12 +427,12 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
                 id="edit-quoteDate"
                 value={editQuoteDate}
                 onChange={(e) => setEditQuoteDate(e.target.value)}
-                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             )}
 
             {editQuoteDatePrecision === "unknown" && (
-              <div className="rounded-lg bg-white/5 p-3 text-sm text-gray-400 italic">
+              <div className="rounded-lg bg-white/5 p-3 text-sm italic text-gray-400">
                 Date information is unknown or not specified
               </div>
             )}
@@ -438,35 +440,69 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
 
           {/* Speaker Selection */}
           <div>
-            <label
-              htmlFor="edit-speaker"
-              className="mb-2 block text-lg font-medium"
-            >
-              Speaker
-            </label>
+            <label className="mb-2 block text-lg font-medium">Speakers</label>
+
+            {/* Selected Speakers */}
+            {editSpeakerIds.length > 0 && (
+              <div className="mb-4">
+                <p className="mb-2 text-sm text-gray-300">Selected speakers:</p>
+                <div className="flex flex-wrap gap-2">
+                  {editSpeakerIds.map((id) => {
+                    const speaker = speakers?.find((s) => s.id === id);
+                    return speaker ? (
+                      <div
+                        key={id}
+                        className="flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-600/20 px-3 py-1 text-sm"
+                      >
+                        <span>{speaker.name}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditSpeakerIds((prev) =>
+                              prev.filter((speakerId) => speakerId !== id),
+                            )
+                          }
+                          className="text-purple-300 transition-colors hover:text-white"
+                          aria-label={`Remove ${speaker.name}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Speaker Selection Dropdown */}
             <select
-              id="edit-speaker"
-              value={editSpeakerId ?? ""}
-              onChange={(e) =>
-                setEditSpeakerId(
-                  e.target.value ? parseInt(e.target.value) : null,
-                )
-              }
-              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
-              required
+              value=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  const speakerId = parseInt(e.target.value);
+                  if (!editSpeakerIds.includes(speakerId)) {
+                    setEditSpeakerIds((prev) => [...prev, speakerId]);
+                  }
+                }
+              }}
+              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="" className="bg-gray-800">
-                Select a speaker...
+                {editSpeakerIds.length === 0
+                  ? "Select speakers..."
+                  : "Add another speaker..."}
               </option>
-              {speakers?.map((speaker) => (
-                <option
-                  key={speaker.id}
-                  value={speaker.id}
-                  className="bg-gray-800"
-                >
-                  {speaker.name}
-                </option>
-              ))}
+              {speakers
+                ?.filter((speaker) => !editSpeakerIds.includes(speaker.id))
+                .map((speaker) => (
+                  <option
+                    key={speaker.id}
+                    value={speaker.id}
+                    className="bg-gray-800"
+                  >
+                    {speaker.name}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -475,7 +511,9 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
             <button
               onClick={handleSave}
               disabled={
-                updateQuote.isPending || !editContent.trim() || !editSpeakerId
+                updateQuote.isPending ||
+                !editContent.trim() ||
+                editSpeakerIds.length === 0
               }
               className="rounded-lg bg-green-600 px-6 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:bg-gray-600"
             >
@@ -524,14 +562,18 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
           )}
 
           {/* Quote Content */}
-          <blockquote className="mb-6 text-2xl leading-relaxed font-medium text-white">
+          <blockquote className="mb-6 text-2xl font-medium leading-relaxed text-white">
             &ldquo;{quote.content}&rdquo;
           </blockquote>
 
           {/* Speaker */}
           <div className="mb-6">
             <p className="text-lg text-purple-300">
-              — {quote.speaker.name}
+              {quote.quoteSpeakers?.map((qs, index) => (
+                <span key={qs.speaker.id}>
+                  {index > 0 && ", "}— {qs.speaker.name}
+                </span>
+              ))}
               {quote.quoteDate && quote.quoteDatePrecision !== "unknown" && (
                 <span className="text-gray-400">
                   , {formatQuoteDate(quote.quoteDate, quote.quoteDatePrecision)}
@@ -543,7 +585,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
           {/* Context (if available) */}
           {quote.context && (
             <div className="mb-6 rounded-lg bg-white/5 p-4">
-              <h3 className="mb-2 text-sm font-semibold tracking-wide text-gray-400 uppercase">
+              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">
                 Context
               </h3>
               <p className="leading-relaxed text-gray-300">{quote.context}</p>

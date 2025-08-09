@@ -52,10 +52,7 @@ export const quotes = createTable(
     context: d.text(), // Optional context, only visible on quote page
     quoteDate: d.date(), // Optional date when the quote was said (supports partial dates)
     quoteDatePrecision: d.varchar({ length: 20 }).default("unknown"), // "full", "year-month", "year", "unknown"
-    speakerId: d
-      .integer()
-      .notNull()
-      .references(() => speakers.id),
+    // Removed speakerId - now handled by quoteSpeakers junction table
     submittedById: d
       .varchar({ length: 255 })
       .notNull()
@@ -67,9 +64,34 @@ export const quotes = createTable(
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
   (t) => [
-    index("quote_speaker_idx").on(t.speakerId),
     index("quote_submitted_by_idx").on(t.submittedById),
     index("quote_created_at_idx").on(t.createdAt),
+  ],
+);
+
+// Junction table for many-to-many relationship between quotes and speakers
+export const quoteSpeakers = createTable(
+  "quote_speaker",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    quoteId: d
+      .integer()
+      .notNull()
+      .references(() => quotes.id, { onDelete: "cascade" }),
+    speakerId: d
+      .integer()
+      .notNull()
+      .references(() => speakers.id, { onDelete: "cascade" }),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("quote_speaker_quote_idx").on(t.quoteId),
+    index("quote_speaker_speaker_idx").on(t.speakerId),
+    // Ensure no duplicate speaker assignments per quote
+    unique("quote_speaker_unique").on(t.quoteId, t.speakerId),
   ],
 );
 
@@ -126,7 +148,18 @@ export const speakersRelations = relations(speakers, ({ one, many }) => ({
     fields: [speakers.createdById],
     references: [users.id],
   }),
-  quotes: many(quotes),
+  quoteSpeakers: many(quoteSpeakers),
+}));
+
+export const quoteSpeakersRelations = relations(quoteSpeakers, ({ one }) => ({
+  quote: one(quotes, {
+    fields: [quoteSpeakers.quoteId],
+    references: [quotes.id],
+  }),
+  speaker: one(speakers, {
+    fields: [quoteSpeakers.speakerId],
+    references: [speakers.id],
+  }),
 }));
 
 // Quote votes table
@@ -158,15 +191,12 @@ export const quoteVotes = createTable(
 );
 
 export const quotesRelations = relations(quotes, ({ one, many }) => ({
-  speaker: one(speakers, {
-    fields: [quotes.speakerId],
-    references: [speakers.id],
-  }),
   submittedBy: one(users, {
     fields: [quotes.submittedById],
     references: [users.id],
   }),
   votes: many(quoteVotes),
+  quoteSpeakers: many(quoteSpeakers),
 }));
 
 export const quoteVotesRelations = relations(quoteVotes, ({ one }) => ({

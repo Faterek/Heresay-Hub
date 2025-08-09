@@ -4,6 +4,7 @@ import { useState, memo } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
 import { QuoteVoting } from "./quote-voting";
+import type { Quote } from "~/types";
 
 // Helper function to format dates based on precision
 function formatQuoteDate(
@@ -37,22 +38,7 @@ function formatQuoteDate(
   }
 }
 
-interface Quote {
-  id: number;
-  content: string;
-  context?: string | null;
-  quoteDate?: string | null;
-  quoteDatePrecision?: string | null;
-  speakerId: number;
-  submittedById: string;
-  createdAt: Date;
-  speaker: {
-    name: string;
-  };
-  submittedBy: {
-    name: string | null;
-  };
-}
+// Memoized quote card component
 
 export function QuotesList() {
   const [page, setPage] = useState(1);
@@ -174,7 +160,12 @@ const QuoteCard = memo(function QuoteCard({
           <div className="flex flex-col gap-2 text-sm text-gray-300 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <span className="font-medium text-white">
-                — {quote.speaker.name}
+                —{" "}
+                {quote.quoteSpeakers
+                  ?.map((qs) => qs.speaker.name)
+                  .join(" & ") ??
+                  quote.speakers?.map((s) => s.name).join(" & ") ??
+                  "Unknown Speaker"}
                 {quote.quoteDate && quote.quoteDatePrecision !== "unknown" && (
                   <span className="text-gray-400">
                     ,{" "}
@@ -203,7 +194,7 @@ const QuoteCard = memo(function QuoteCard({
               href={`/profile/${quote.submittedById}`}
               className="font-medium text-purple-300 hover:text-purple-200"
             >
-              {quote.submittedBy.name ?? "Anonymous"}
+              {quote.submittedBy?.name ?? "Anonymous"}
             </Link>
           </span>
         </div>

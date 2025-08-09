@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -46,7 +47,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium transition-colors lg:px-3 ${
+                className={`rounded-md px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors lg:px-3 ${
                   pathname === item.href
                     ? "bg-white/20 text-white"
                     : "text-gray-300 hover:bg-white/10 hover:text-white"
@@ -71,12 +72,38 @@ export function Navbar() {
               <div className="flex items-center space-x-3">
                 <Link
                   href="/profile"
-                  className="group hidden text-right sm:block"
+                  className="group flex items-center space-x-3"
                 >
-                  <p className="text-sm font-medium text-white transition-colors group-hover:text-purple-300">
-                    {session.user.name}
-                  </p>
-                  <p className="text-xs text-gray-400">{session.user.role}</p>
+                  {/* Avatar */}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600/80 text-sm font-medium text-white transition-colors group-hover:bg-purple-600">
+                    {session.user.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt={session.user.name ?? "User"}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span>
+                        {session.user.name
+                          ? session.user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)
+                          : "U"}
+                      </span>
+                    )}
+                  </div>
+                  {/* User Info - Hidden on small screens */}
+                  <div className="hidden text-right sm:block">
+                    <p className="text-sm font-medium text-white transition-colors group-hover:text-purple-300">
+                      {session.user.name}
+                    </p>
+                    <p className="text-xs text-gray-400">{session.user.role}</p>
+                  </div>
                 </Link>
                 <Link
                   href="/api/auth/signout"
@@ -131,13 +158,13 @@ function AdminDropdown({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium transition-colors lg:px-3 ${
+        className={`flex items-center rounded-md px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors lg:px-3 ${
           isActive
             ? "bg-white/20 text-white"
             : "text-gray-300 hover:bg-white/10 hover:text-white"
         }`}
       >
-        Admin
+        Manage
         <svg
           className="ml-1 h-4 w-4 transition-transform duration-200"
           style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
@@ -163,7 +190,7 @@ function AdminDropdown({
           />
 
           {/* Dropdown Menu */}
-          <div className="absolute left-0 top-full z-50 mt-2 w-48 rounded-md border border-white/10 bg-gray-900/95 shadow-lg backdrop-blur-sm">
+          <div className="absolute top-full left-0 z-50 mt-2 w-48 rounded-md border border-white/10 bg-gray-900/95 shadow-lg backdrop-blur-sm">
             <div className="py-2">
               {availableItems.map((item) => (
                 <Link
@@ -253,7 +280,7 @@ function MobileMenuButton({
           />
 
           {/* Menu */}
-          <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-md border border-white/10 bg-gray-900/95 shadow-lg backdrop-blur-sm">
+          <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-md border border-white/10 bg-gray-900/95 shadow-lg backdrop-blur-sm">
             <div className="py-2">
               {navItems.map((item) => (
                 <Link

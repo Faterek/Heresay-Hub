@@ -3,6 +3,7 @@
 import { memo } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
+import type { Quote } from "~/types";
 import { QuoteVoting } from "./quote-voting";
 
 // Helper function to format dates based on precision
@@ -127,23 +128,6 @@ export function RecentQuotes() {
   );
 }
 
-interface Quote {
-  id: number;
-  content: string;
-  context?: string | null;
-  quoteDate?: string | null;
-  quoteDatePrecision?: string | null;
-  speakerId: number;
-  submittedById: string;
-  createdAt: Date;
-  speaker: {
-    name: string;
-  };
-  submittedBy: {
-    name: string | null;
-  };
-}
-
 const QuoteCard = memo(function QuoteCard({ quote }: { quote: Quote }) {
   return (
     <div className="rounded-lg bg-white/10 p-4 transition-colors hover:bg-white/15">
@@ -164,7 +148,12 @@ const QuoteCard = memo(function QuoteCard({ quote }: { quote: Quote }) {
           <div className="flex flex-col gap-1 text-sm text-gray-300">
             <div>
               <span className="font-medium text-white">
-                — {quote.speaker.name}
+                —{" "}
+                {quote.quoteSpeakers
+                  ?.map((qs) => qs.speaker.name)
+                  .join(" & ") ??
+                  quote.speakers?.map((s) => s.name).join(" & ") ??
+                  "Unknown Speaker"}
                 {quote.quoteDate && quote.quoteDatePrecision !== "unknown" && (
                   <span className="text-gray-400">
                     ,{" "}
@@ -185,7 +174,7 @@ const QuoteCard = memo(function QuoteCard({ quote }: { quote: Quote }) {
             href={`/profile/${quote.submittedById}`}
             className="font-medium text-purple-300 hover:text-purple-200"
           >
-            {quote.submittedBy.name ?? "Anonymous"}
+            {quote.submittedBy?.name ?? "Anonymous"}
           </Link>
         </span>
         <span>{new Date(quote.createdAt).toLocaleDateString()}</span>
