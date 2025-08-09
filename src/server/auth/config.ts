@@ -2,7 +2,6 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
 import DiscordProvider from "next-auth/providers/discord";
-import { eq } from "drizzle-orm";
 
 import { db } from "~/server/db";
 import {
@@ -54,6 +53,20 @@ export const authConfig = {
       clientSecret: process.env.AUTH_DISCORD_SECRET!,
       authorization:
         "https://discord.com/api/oauth2/authorize?scope=identify+email+guilds",
+      async profile(profile, _tokens) {
+        // Set role to OWNER if user is the designated owner
+        const role = profile.id === process.env.HH_OWNER_ID ? "OWNER" : "USER";
+        
+        return {
+          id: profile.id,
+          name: profile.username ?? profile.global_name,
+          email: profile.email,
+          image: profile.avatar
+            ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+            : null,
+          role: role,
+        };
+      },
     } satisfies Parameters<typeof DiscordProvider>[0]),
   ],
   adapter: DrizzleAdapter(db, {
@@ -69,7 +82,7 @@ export const authConfig = {
   },
   debug: process.env.NODE_ENV === "development",
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ account }) {
       // Allow sign in for non-Discord providers or if no guild checking is needed
       if (account?.provider !== "discord" || !account.access_token) {
         return true;
@@ -96,7 +109,6 @@ export const authConfig = {
 
         const guilds = (await guildsResponse.json()) as Array<{ id: string }>;
         const userGuildIds = guilds.map((guild) => guild.id);
-        const discordUserId = account.providerAccountId;
 
         // Get allowed guild IDs from env
         const allowedGuildIds =
@@ -110,20 +122,6 @@ export const authConfig = {
         if (!hasAccess) {
           console.log("User does not have access to required guilds");
           return false;
-        }
-
-        // If user is in the owner guild, set role to OWNER
-        if (discordUserId === process.env.HH_OWNER_ID && user.id) {
-          try {
-            // Update user role to OWNER in database
-            await db
-              .update(users)
-              .set({ role: "OWNER" })
-              .where(eq(users.id, user.id));
-          } catch (error) {
-            console.error("Error updating user role:", error);
-            // Don't fail sign-in if role update fails
-          }
         }
 
         return true;
