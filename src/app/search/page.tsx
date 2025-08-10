@@ -7,6 +7,7 @@ import Link from "next/link";
 import { api } from "~/trpc/react";
 import { format } from "date-fns";
 import { PageLayout } from "~/app/_components/page-layout";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface SearchFilters {
   query: string;
@@ -21,6 +22,7 @@ function SearchContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<SearchFilters>({
     query: searchParams.get("q") ?? "",
     speakerId: undefined,
@@ -135,7 +137,7 @@ function SearchContent() {
   };
 
   const formatQuoteDate = (date: string | null, precision: string | null) => {
-    if (!date) return "Unknown date";
+    if (!date) return t("errors.unknownDate");
 
     const dateObj = new Date(date);
 
@@ -147,7 +149,7 @@ function SearchContent() {
       case "full":
         return format(dateObj, "MMMM d, yyyy");
       default:
-        return "Unknown date";
+        return t("errors.unknownDate");
     }
   };
 
@@ -158,7 +160,7 @@ function SearchContent() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-purple-500"></div>
-            <p className="mt-4 text-gray-400">Loading...</p>
+            <p className="mt-4 text-gray-400">{t("common.loading")}</p>
           </div>
         </div>
       </PageLayout>
@@ -171,15 +173,17 @@ function SearchContent() {
       <PageLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-            <h1 className="mb-4 text-4xl font-bold">Sign In Required</h1>
+            <h1 className="mb-4 text-4xl font-bold">
+              {t("errors.signInRequired")}
+            </h1>
             <p className="mb-8 text-xl text-gray-300">
-              You need to sign in to search quotes.
+              {t("errors.needToSignIn")} {t("errors.searchQuotes")}.
             </p>
             <Link
               href="/api/auth/signin"
               className="rounded-lg bg-purple-600 px-8 py-3 font-medium transition-colors hover:bg-purple-700"
             >
-              Sign in with Discord
+              {t("common.signInWithDiscord")}
             </Link>
           </div>
         </div>
@@ -194,11 +198,9 @@ function SearchContent() {
         <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="mb-2 text-4xl font-bold text-white">
-              Search Quotes
+              {t("search.searchQuotes")}
             </h1>
-            <p className="text-gray-300">
-              Find quotes using fuzzy search and advanced filters
-            </p>
+            <p className="text-gray-300">{t("search.findQuotesDescription")}</p>
           </div>
         </div>
 
@@ -211,14 +213,14 @@ function SearchContent() {
                 htmlFor="search"
                 className="mb-2 block text-sm font-medium text-gray-300"
               >
-                Search in quotes, context, and speaker names (optional)
+                {t("search.searchInQuotes")}
               </label>
               <input
                 id="search"
                 type="text"
                 value={filters.query}
                 onChange={(e) => handleFilterChange("query", e.target.value)}
-                placeholder="Enter your search query (leave empty to browse all quotes)..."
+                placeholder={t("search.searchPlaceholder")}
                 className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
               />
             </div>
@@ -231,7 +233,7 @@ function SearchContent() {
                   htmlFor="speaker"
                   className="mb-2 block text-sm font-medium text-gray-300"
                 >
-                  Speaker
+                  {t("quotes.speaker")}
                 </label>
                 <select
                   id="speaker"
@@ -245,7 +247,7 @@ function SearchContent() {
                   className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none [&>option]:bg-gray-800 [&>option]:text-white"
                 >
                   <option value="" className="bg-gray-800 text-white">
-                    All speakers
+                    {t("search.allSpeakers")}
                   </option>
                   {speakersQuery.data?.map((speaker) => (
                     <option
@@ -265,7 +267,7 @@ function SearchContent() {
                   htmlFor="submittedBy"
                   className="mb-2 block text-sm font-medium text-gray-300"
                 >
-                  Submitted by
+                  {t("quotes.submittedBy")}
                 </label>
                 <select
                   id="submittedBy"
@@ -279,7 +281,7 @@ function SearchContent() {
                   className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white transition-colors focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none [&>option]:bg-gray-800 [&>option]:text-white"
                 >
                   <option value="" className="bg-gray-800 text-white">
-                    All users
+                    {t("search.allUsers")}
                   </option>
                   {usersQuery.data?.map((user) => (
                     <option
@@ -299,7 +301,7 @@ function SearchContent() {
                   htmlFor="dateFrom"
                   className="mb-2 block text-sm font-medium text-gray-300"
                 >
-                  Quote date from
+                  {t("search.quoteDateFrom")}
                 </label>
                 <input
                   id="dateFrom"
@@ -325,7 +327,7 @@ function SearchContent() {
                   htmlFor="dateTo"
                   className="mb-2 block text-sm font-medium text-gray-300"
                 >
-                  Quote date to
+                  {t("search.quoteDateTo")}
                 </label>
                 <input
                   id="dateTo"
@@ -361,7 +363,7 @@ function SearchContent() {
                 htmlFor="includeUnknownDates"
                 className="ml-2 text-sm text-gray-300"
               >
-                Include quotes with unknown dates
+                {t("search.includeUnknownDates")}
               </label>
             </div>
           </div>
@@ -373,14 +375,14 @@ function SearchContent() {
             {searchQuery.isLoading && (
               <div className="py-12 text-center">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-purple-500"></div>
-                <p className="mt-4 text-gray-400">Searching...</p>
+                <p className="mt-4 text-gray-400">{t("search.searching")}</p>
               </div>
             )}
 
             {searchQuery.error && (
               <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4">
                 <p className="text-red-400">
-                  Error: {searchQuery.error.message}
+                  {t("common.error")}: {searchQuery.error.message}
                 </p>
               </div>
             )}
@@ -390,11 +392,11 @@ function SearchContent() {
                 {/* Results Summary */}
                 <div className="mb-6 px-1">
                   <p className="text-sm text-gray-300">
-                    Found{" "}
+                    {t("search.found")}{" "}
                     <span className="font-medium text-white">
                       {searchQuery.data.pagination?.totalResults ?? 0}
                     </span>{" "}
-                    result(s)
+                    {t("search.results")}
                     {filters.query.trim() && (
                       <span>
                         {" "}
@@ -408,7 +410,7 @@ function SearchContent() {
                     {(searchQuery.data.pagination?.totalPages ?? 0) > 1 && (
                       <span>
                         {" "}
-                        • Page {currentPage} of{" "}
+                        • {t("common.page")} {currentPage} {t("search.of")}{" "}
                         {searchQuery.data.pagination?.totalPages}
                       </span>
                     )}
@@ -437,16 +439,16 @@ function SearchContent() {
                       <Link
                         key={quote.id}
                         href={`/quotes/${quote.id}${searchUrlString}`}
-                        className="block rounded-lg border border-white/10 bg-white/5 p-6 transition-colors hover:border-white/20 hover:bg-white/10"
+                        className="block rounded-lg border border-white/10 bg-white/5 p-4 transition-colors hover:border-white/20 hover:bg-white/10"
                       >
-                        <div className="mb-4">
-                          <p className="text-lg leading-relaxed text-white">
+                        <div className="mb-3">
+                          <p className="text-base leading-relaxed text-white">
                             &ldquo;{quote.content}&rdquo;
                           </p>
                           {quote.context && (
-                            <div className="mt-3 rounded-md border-l-2 border-purple-500/50 bg-white/5 p-3">
+                            <div className="mt-2 rounded-md border-l-2 border-purple-500/50 bg-white/5 p-2">
                               <p className="text-sm text-gray-400 italic">
-                                Context: {quote.context}
+                                {t("quotes.context")}: {quote.context}
                               </p>
                             </div>
                           )}
@@ -467,7 +469,7 @@ function SearchContent() {
                             )}
                           </span>
                           <span className="text-gray-400">
-                            Submitted by{" "}
+                            {t("quotes.submittedBy")}{" "}
                             <span className="text-gray-300">
                               {quote.submittedBy.name}
                             </span>
@@ -493,7 +495,7 @@ function SearchContent() {
                       disabled={!searchQuery.data.pagination?.hasPreviousPage}
                       className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/10"
                     >
-                      Previous
+                      {t("common.previous")}
                     </button>
 
                     <div className="flex items-center space-x-1">
@@ -535,7 +537,7 @@ function SearchContent() {
                       disabled={!searchQuery.data.pagination?.hasNextPage}
                       className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/10"
                     >
-                      Next
+                      {t("common.next")}
                     </button>
                   </div>
                 )}
@@ -561,11 +563,10 @@ function SearchContent() {
                   </svg>
                 </div>
                 <h3 className="mb-2 text-lg font-medium text-white">
-                  No quotes found
+                  {t("search.noQuotesFound")}
                 </h3>
                 <p className="text-gray-400">
-                  No quotes found matching your search criteria. Try adjusting
-                  your filters or search terms.
+                  {t("search.noQuotesFoundDescription")}
                 </p>
               </div>
             )}
@@ -592,13 +593,11 @@ function SearchContent() {
               </svg>
             </div>
             <h3 className="mb-2 text-xl font-medium text-white">
-              Ready to search
+              {t("search.readyToSearch")}
             </h3>
-            <p className="text-gray-400">
-              Enter a search query or use the filters above to find quotes.
-            </p>
+            <p className="text-gray-400">{t("search.enterSearchQuery")}</p>
             <p className="mt-2 text-sm text-gray-500">
-              You can search by text, filter by speaker, user, or date range.
+              {t("search.searchDescription")}
             </p>
           </div>
         )}

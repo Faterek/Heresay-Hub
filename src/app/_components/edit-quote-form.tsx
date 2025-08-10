@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { api } from "~/trpc/react";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface EditQuoteFormProps {
   quoteId: number;
@@ -12,6 +13,7 @@ interface EditQuoteFormProps {
 }
 
 export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
+  const { t } = useTranslation();
   const [editContent, setEditContent] = useState("");
   const [editContext, setEditContext] = useState("");
   const [editQuoteDate, setEditQuoteDate] = useState("");
@@ -203,7 +205,7 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
     return (
       <div className="py-12 text-center">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-purple-500"></div>
-        <p className="mt-4 text-gray-400">Loading quote...</p>
+        <p className="mt-4 text-gray-400">{t("common.loading")}</p>
       </div>
     );
   }
@@ -211,7 +213,9 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
   if (error) {
     return (
       <div className="py-12 text-center">
-        <p className="text-red-400">Error loading quote: {error.message}</p>
+        <p className="text-red-400">
+          {t("common.errorLoading")}: {error.message}
+        </p>
       </div>
     );
   }
@@ -219,7 +223,7 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
   if (!quote) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-400">Quote not found.</p>
+        <p className="text-gray-400">{t("quotes.notFound")}</p>
       </div>
     );
   }
@@ -227,14 +231,12 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
   if (!canEdit) {
     return (
       <div className="py-12 text-center">
-        <p className="text-red-400">
-          You don&apos;t have permission to edit this quote.
-        </p>
+        <p className="text-red-400">{t("quotes.noPermissionToEdit")}</p>
         <Link
           href={backUrl}
           className="mt-4 inline-block text-purple-400 hover:text-purple-300"
         >
-          Go back
+          {t("common.goBack")}
         </Link>
       </div>
     );
@@ -261,12 +263,14 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Back to Quote
+          {t("quotes.backToQuote")}
         </Link>
       </div>
 
       <div className="rounded-lg bg-white/10 p-8">
-        <h1 className="mb-6 text-2xl font-bold text-white">Edit Quote</h1>
+        <h1 className="mb-6 text-2xl font-bold text-white">
+          {t("quotes.editQuote")}
+        </h1>
 
         <div className="space-y-6">
           {/* Quote Content Field */}
@@ -275,25 +279,27 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
               htmlFor="edit-content"
               className="mb-2 block text-lg font-medium"
             >
-              Quote Content
+              {t("quotes.content")}
             </label>
             <textarea
               id="edit-content"
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="h-32 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
-              placeholder="Enter the quote content..."
+              className="h-32 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder={t("quotes.contentPlaceholder")}
               required
               maxLength={2000}
             />
             <div className="mt-1 text-right text-sm text-gray-400">
-              {editContent.length}/2000 characters
+              {editContent.length}/2000 {t("common.characters")}
             </div>
           </div>
 
           {/* Speaker Selection */}
           <div>
-            <label className="mb-2 block text-lg font-medium">Speaker(s)</label>
+            <label className="mb-2 block text-lg font-medium">
+              {t("quotes.speakers")}
+            </label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {speakers?.map((speaker) => (
                 <label
@@ -320,7 +326,7 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
             </div>
             {editSpeakerIds.length === 0 && (
               <p className="mt-2 text-sm text-red-400">
-                Please select at least one speaker.
+                {t("quotes.selectAtLeastOneSpeaker")}
               </p>
             )}
           </div>
@@ -331,36 +337,36 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
               htmlFor="edit-context"
               className="mb-2 block text-lg font-medium"
             >
-              Context{" "}
+              {t("quotes.context")}{" "}
               <span className="text-sm font-normal text-gray-400">
-                (Optional)
+                ({t("common.optional")})
               </span>
             </label>
             <textarea
               id="edit-context"
               value={editContext}
               onChange={(e) => setEditContext(e.target.value)}
-              className="h-24 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              className="h-24 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
               maxLength={1000}
             />
             <div className="mt-1 text-right text-sm text-gray-400">
-              {editContext.length}/1000 characters
+              {editContext.length}/1000 {t("common.characters")}
             </div>
           </div>
 
           {/* Quote Date Field */}
           <div>
             <label className="mb-3 block text-lg font-medium">
-              Date{" "}
+              {t("quotes.date")}{" "}
               <span className="text-sm font-normal text-gray-400">
-                (Optional)
+                ({t("common.optional")})
               </span>
             </label>
 
             {/* Date Precision Selection */}
             <div className="mb-4 space-y-2">
               <label className="text-sm font-medium text-gray-300">
-                Date Precision
+                {t("quotes.datePrecision")}
               </label>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <label className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/20 bg-white/5 p-3 transition-colors hover:bg-white/10">
@@ -375,7 +381,7 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
                     }}
                     className="text-purple-600 focus:ring-purple-500"
                   />
-                  <span className="text-sm">Unknown</span>
+                  <span className="text-sm">{t("quotes.dateUnknown")}</span>
                 </label>
 
                 <label className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/20 bg-white/5 p-3 transition-colors hover:bg-white/10">
@@ -392,7 +398,7 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
                     }}
                     className="text-purple-600 focus:ring-purple-500"
                   />
-                  <span className="text-sm">Year only</span>
+                  <span className="text-sm">{t("quotes.dateYearOnly")}</span>
                 </label>
 
                 <label className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/20 bg-white/5 p-3 transition-colors hover:bg-white/10">
@@ -406,7 +412,7 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
                     }}
                     className="text-purple-600 focus:ring-purple-500"
                   />
-                  <span className="text-sm">Year & Month</span>
+                  <span className="text-sm">{t("quotes.dateYearMonth")}</span>
                 </label>
 
                 <label className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/20 bg-white/5 p-3 transition-colors hover:bg-white/10">
@@ -420,7 +426,7 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
                     }}
                     className="text-purple-600 focus:ring-purple-500"
                   />
-                  <span className="text-sm">Full date</span>
+                  <span className="text-sm">{t("quotes.dateFullDate")}</span>
                 </label>
               </div>
             </div>
@@ -429,11 +435,12 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
             {editQuoteDatePrecision !== "unknown" && (
               <div>
                 <label className="text-sm font-medium text-gray-300">
-                  {editQuoteDatePrecision === "year" && "Year (YYYY)"}
+                  {editQuoteDatePrecision === "year" &&
+                    t("quotes.dateYearFormat")}
                   {editQuoteDatePrecision === "year-month" &&
-                    "Year and Month (YYYY-MM)"}
+                    t("quotes.dateYearMonthFormat")}
                   {editQuoteDatePrecision === "full" &&
-                    "Full Date (YYYY-MM-DD)"}
+                    t("quotes.dateFullFormat")}
                 </label>
                 <input
                   type={
@@ -445,11 +452,11 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
                   }
                   value={editQuoteDate}
                   onChange={(e) => setEditQuoteDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
                   {...(editQuoteDatePrecision === "year" && {
                     min: 1000,
                     max: new Date().getFullYear(),
-                    placeholder: "e.g., 2023",
+                    placeholder: t("quotes.dateYearPlaceholder"),
                   })}
                 />
               </div>
@@ -467,20 +474,22 @@ export function EditQuoteForm({ quoteId, searchParams }: EditQuoteFormProps) {
               }
               className="rounded-lg bg-green-600 px-6 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:bg-gray-600 disabled:text-gray-400"
             >
-              {updateQuote.isPending ? "Saving..." : "Save Changes"}
+              {updateQuote.isPending
+                ? t("common.saving")
+                : t("quotes.saveChanges")}
             </button>
             <Link
               href={backUrl}
               className="rounded-lg bg-gray-600 px-6 py-2 font-medium text-white transition-colors hover:bg-gray-700"
             >
-              Cancel
+              {t("common.cancel")}
             </Link>
           </div>
 
           {updateQuote.error && (
             <div className="rounded-lg border border-red-600/50 bg-red-600/20 p-3">
               <p className="text-sm text-red-300">
-                Error: {updateQuote.error.message}
+                {t("common.error")}: {updateQuote.error.message}
               </p>
             </div>
           )}

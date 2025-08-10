@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface AdminPanelProps {
   userRole: string;
@@ -12,6 +13,7 @@ interface AdminPanelProps {
 export function AdminPanel({ userRole, currentUserId }: AdminPanelProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>("");
+  const { t } = useTranslation();
 
   const utils = api.useUtils();
 
@@ -51,7 +53,9 @@ export function AdminPanel({ userRole, currentUserId }: AdminPanelProps) {
     <div className="space-y-8">
       {/* Statistics */}
       <div className="rounded-lg bg-white/10 p-6">
-        <h2 className="mb-4 text-xl font-bold">System Statistics</h2>
+        <h2 className="mb-4 text-xl font-bold">
+          {t("common.systemStatistics")}
+        </h2>
         {statsLoading ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -64,29 +68,35 @@ export function AdminPanel({ userRole, currentUserId }: AdminPanelProps) {
               <div className="text-3xl font-bold text-purple-400">
                 {stats.userCount}
               </div>
-              <div className="text-sm text-gray-400">Total Users</div>
+              <div className="text-sm text-gray-400">
+                {t("common.totalUsers")}
+              </div>
             </div>
             <div className="rounded-lg bg-white/5 p-4 text-center">
               <div className="text-3xl font-bold text-blue-400">
                 {stats.quoteCount}
               </div>
-              <div className="text-sm text-gray-400">Total Quotes</div>
+              <div className="text-sm text-gray-400">
+                {t("common.totalQuotes")}
+              </div>
             </div>
             <div className="rounded-lg bg-white/5 p-4 text-center">
               <div className="text-3xl font-bold text-green-400">
                 {stats.speakerCount}
               </div>
-              <div className="text-sm text-gray-400">Total Speakers</div>
+              <div className="text-sm text-gray-400">
+                {t("common.totalSpeakers")}
+              </div>
             </div>
           </div>
         ) : (
-          <p className="text-gray-400">Failed to load statistics</p>
+          <p className="text-gray-400">{t("common.failedToLoadStats")}</p>
         )}
       </div>
 
       {/* Users Management */}
       <div className="rounded-lg bg-white/10 p-6">
-        <h2 className="mb-4 text-xl font-bold">User Management</h2>
+        <h2 className="mb-4 text-xl font-bold">{t("common.userManagement")}</h2>
 
         {usersLoading ? (
           <div className="space-y-3">
@@ -95,7 +105,9 @@ export function AdminPanel({ userRole, currentUserId }: AdminPanelProps) {
             ))}
           </div>
         ) : !users || users.length === 0 ? (
-          <p className="py-8 text-center text-gray-400">No users found.</p>
+          <p className="py-8 text-center text-gray-400">
+            {t("common.noUsersFound")}
+          </p>
         ) : (
           <div className="space-y-3">
             {users.map((user) => (
@@ -181,13 +193,13 @@ export function AdminPanel({ userRole, currentUserId }: AdminPanelProps) {
                           }
                           className="rounded bg-purple-600 px-3 py-1 text-sm transition-colors hover:bg-purple-700"
                         >
-                          Change Role
+                          {t("admin.changeRole")}
                         </button>
                       ) : (
                         <span className="rounded bg-gray-600/50 px-3 py-1 text-sm text-gray-400">
                           {user.role === "OWNER"
-                            ? "Owner (Protected)"
-                            : "You (Cannot change own role)"}
+                            ? t("admin.ownerProtected")
+                            : t("admin.cannotChangeOwnRole")}
                         </span>
                       )}
                     </div>

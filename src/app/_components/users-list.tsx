@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { api } from "~/trpc/react";
+import { useTranslation } from "~/hooks/useI18n";
 
 export function UsersList() {
   const [currentPage, setCurrentPage] = useState(1);
+  const { t } = useTranslation();
 
   const { data: users, isLoading } = api.user.getAll.useQuery({
     page: currentPage,
@@ -24,7 +26,7 @@ export function UsersList() {
   if (!users || users.length === 0) {
     return (
       <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center">
-        <p className="text-gray-400">No users found.</p>
+        <p className="text-gray-400">{t("common.noUsersFound")}</p>
       </div>
     );
   }
@@ -59,7 +61,7 @@ export function UsersList() {
             {/* User Info */}
             <div className="text-center">
               <h3 className="font-semibold text-white group-hover:text-purple-300">
-                {user.name ?? "Anonymous User"}
+                {user.name ?? t("errors.anonymousUser")}
               </h3>
 
               <div className="mt-2 flex items-center justify-center space-x-2">
@@ -74,7 +76,9 @@ export function UsersList() {
                   {user.quotesCount}
                 </div>
                 <div className="text-xs text-gray-400">
-                  Quote{user.quotesCount !== 1 ? "s" : ""}
+                  {user.quotesCount === 1
+                    ? t("common.quote")
+                    : t("common.quotes")}
                 </div>
               </div>
             </div>
@@ -89,7 +93,7 @@ export function UsersList() {
             onClick={() => setCurrentPage(currentPage + 1)}
             className="rounded-md bg-purple-600/80 px-6 py-2 text-sm font-medium transition-colors hover:bg-purple-600"
           >
-            Load More Users
+            {t("common.loadMoreUsers")}
           </button>
         </div>
       )}

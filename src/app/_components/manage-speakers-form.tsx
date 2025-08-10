@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface ManageSpeakersFormProps {
   userRole: string;
@@ -13,6 +14,7 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
     id: number;
     name: string;
   } | null>(null);
+  const { t } = useTranslation();
 
   const utils = api.useUtils();
 
@@ -80,13 +82,13 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
     <div className="space-y-8">
       {/* Add New Speaker */}
       <div className="rounded-lg bg-white/10 p-6">
-        <h2 className="mb-4 text-xl font-bold">Add New Speaker</h2>
+        <h2 className="mb-4 text-xl font-bold">{t("quotes.addNewSpeaker")}</h2>
         <form onSubmit={handleCreateSpeaker} className="flex gap-3">
           <input
             type="text"
             value={newSpeakerName}
             onChange={(e) => setNewSpeakerName(e.target.value)}
-            placeholder="Speaker name..."
+            placeholder={t("quotes.speakerNamePlaceholder")}
             className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
             maxLength={256}
             required
@@ -96,7 +98,9 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
             disabled={!newSpeakerName.trim() || createSpeaker.isPending}
             className="rounded-lg bg-purple-600 px-6 py-2 font-medium transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-600"
           >
-            {createSpeaker.isPending ? "Adding..." : "Add Speaker"}
+            {createSpeaker.isPending
+              ? t("quotes.adding")
+              : t("quotes.addSpeaker")}
           </button>
         </form>
 
@@ -111,7 +115,9 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
 
       {/* Speakers List */}
       <div className="rounded-lg bg-white/10 p-6">
-        <h2 className="mb-4 text-xl font-bold">Current Speakers</h2>
+        <h2 className="mb-4 text-xl font-bold">
+          {t("quotes.currentSpeakers")}
+        </h2>
 
         {speakersLoading ? (
           <div className="space-y-3">
@@ -121,7 +127,7 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
           </div>
         ) : !speakers || speakers.length === 0 ? (
           <p className="py-8 text-center text-gray-400">
-            No speakers found. Add the first speaker above.
+            {t("quotes.noSpeakersFound")}
           </p>
         ) : (
           <div className="space-y-3">
@@ -155,14 +161,16 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
                       }
                       className="rounded bg-green-600 px-4 py-1 text-sm transition-colors hover:bg-green-700 disabled:bg-gray-600"
                     >
-                      {updateSpeaker.isPending ? "Saving..." : "Save"}
+                      {updateSpeaker.isPending
+                        ? t("common.saving")
+                        : t("common.save")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingSpeaker(null)}
                       className="rounded bg-gray-600 px-4 py-1 text-sm transition-colors hover:bg-gray-700"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                   </form>
                 ) : (
@@ -171,7 +179,7 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
                       <h3 className="font-medium">{speaker.name}</h3>
                       {speaker.createdBy && (
                         <p className="text-sm text-gray-400">
-                          Added by {speaker.createdBy.name}
+                          {t("quotes.addedBy")} {speaker.createdBy.name}
                         </p>
                       )}
                     </div>
@@ -185,7 +193,7 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
                         }
                         className="rounded bg-blue-600 px-3 py-1 text-sm transition-colors hover:bg-blue-700"
                       >
-                        Edit
+                        {t("common.edit")}
                       </button>
                       {canDelete && (
                         <button
@@ -193,7 +201,9 @@ export function ManageSpeakersForm({ userRole }: ManageSpeakersFormProps) {
                           disabled={deleteSpeaker.isPending}
                           className="rounded bg-red-600 px-3 py-1 text-sm transition-colors hover:bg-red-700 disabled:bg-gray-600"
                         >
-                          {deleteSpeaker.isPending ? "Deleting..." : "Delete"}
+                          {deleteSpeaker.isPending
+                            ? t("common.deleting")
+                            : t("common.delete")}
                         </button>
                       )}
                     </div>

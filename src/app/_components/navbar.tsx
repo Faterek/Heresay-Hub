@@ -5,20 +5,23 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTranslation } from "~/hooks/useI18n";
+import { LanguageSwitcher } from "./language-switcher";
 
 export function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { t } = useTranslation();
 
-  const navItems = [{ href: "/", label: "Home" }];
+  const navItems = [{ href: "/", label: t("navigation.home") }];
 
   // Add authenticated routes
   if (session?.user) {
-    navItems.push({ href: "/quotes", label: "Quotes" });
-    navItems.push({ href: "/search", label: "Search" });
-    navItems.push({ href: "/ranking", label: "Rankings" });
-    navItems.push({ href: "/users", label: "Users" });
-    navItems.push({ href: "/submit", label: "Submit Quote" });
+    navItems.push({ href: "/quotes", label: t("navigation.quotes") });
+    navItems.push({ href: "/search", label: t("navigation.search") });
+    navItems.push({ href: "/ranking", label: t("navigation.rankings") });
+    navItems.push({ href: "/users", label: t("navigation.users") });
+    navItems.push({ href: "/submit", label: t("navigation.submitQuote") });
   }
 
   // Check if user has admin privileges
@@ -31,7 +34,7 @@ export function Navbar() {
   return (
     <nav className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
       <div className="container mx-auto px-4">
-        <div className="relative flex h-16 items-center">
+        <div className="relative flex h-20 items-center">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
@@ -42,12 +45,12 @@ export function Navbar() {
           </div>
 
           {/* Navigation Links - Absolutely Centered */}
-          <div className="absolute left-1/2 hidden -translate-x-1/2 transform items-center space-x-4 md:flex lg:space-x-6">
+          <div className="absolute left-1/2 hidden -translate-x-1/2 transform items-center space-x-2 md:flex lg:space-x-3">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-md px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors lg:px-3 ${
+                className={`rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors lg:px-4 ${
                   pathname === item.href
                     ? "bg-white/20 text-white"
                     : "text-gray-300 hover:bg-white/10 hover:text-white"
@@ -67,12 +70,12 @@ export function Navbar() {
           </div>
 
           {/* Auth Section - Right Aligned */}
-          <div className="ml-auto flex items-center space-x-4">
+          <div className="ml-auto flex items-center space-x-2">
             {session?.user ? (
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 <Link
                   href="/profile"
-                  className="group flex items-center space-x-3"
+                  className="group flex items-center space-x-2"
                 >
                   {/* Avatar */}
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-600/80 text-sm font-medium text-white transition-colors group-hover:bg-purple-600">
@@ -109,7 +112,7 @@ export function Navbar() {
                   href="/api/auth/signout"
                   className="rounded-md bg-red-600/80 px-4 py-2 text-sm font-medium transition-colors hover:bg-red-600"
                 >
-                  Sign Out
+                  {t("navigation.signOut")}
                 </Link>
               </div>
             ) : (
@@ -117,9 +120,12 @@ export function Navbar() {
                 href="/api/auth/signin"
                 className="rounded-md bg-purple-600/80 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-600"
               >
-                Sign In
+                {t("navigation.signIn")}
               </Link>
             )}
+
+            {/* Language Switcher */}
+            <LanguageSwitcher />
 
             {/* Mobile menu button */}
             <div className="md:hidden">
@@ -140,10 +146,15 @@ function AdminDropdown({
   pathname: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   const adminItems = [
-    { href: "/manage", label: "Manage Speakers", access: "moderator" },
-    { href: "/admin", label: "Admin Panel", access: "admin" },
+    {
+      href: "/manage",
+      label: t("navigation.manageSpeakers"),
+      access: "moderator",
+    },
+    { href: "/admin", label: t("navigation.adminPanel"), access: "admin" },
   ];
 
   const availableItems = adminItems.filter(
@@ -158,13 +169,13 @@ function AdminDropdown({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center rounded-md px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors lg:px-3 ${
+        className={`flex items-center rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors lg:px-4 ${
           isActive
             ? "bg-white/20 text-white"
             : "text-gray-300 hover:bg-white/10 hover:text-white"
         }`}
       >
-        Manage
+        {t("navigation.manage")}
         <svg
           className="ml-1 h-4 w-4 transition-transform duration-200"
           style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
@@ -222,6 +233,7 @@ function MobileMenuButton({
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { t } = useTranslation();
 
   // Check admin access for mobile
   const hasModeratorAccess =
@@ -231,8 +243,12 @@ function MobileMenuButton({
     session?.user && ["ADMIN", "OWNER"].includes(session.user.role);
 
   const adminItems = [
-    { href: "/manage", label: "Manage Speakers", access: "moderator" },
-    { href: "/admin", label: "Admin Panel", access: "admin" },
+    {
+      href: "/manage",
+      label: t("navigation.manageSpeakers"),
+      access: "moderator",
+    },
+    { href: "/admin", label: t("navigation.adminPanel"), access: "admin" },
   ];
 
   const availableAdminItems = adminItems.filter(
@@ -331,7 +347,7 @@ function MobileMenuButton({
                         : "text-gray-300 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    My Profile
+                    {t("navigation.myProfile")}
                   </Link>
                 </>
               )}

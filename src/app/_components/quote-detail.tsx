@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { api } from "~/trpc/react";
 import { QuoteVoting } from "./quote-voting";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface QuoteDetailProps {
   quoteId: number;
@@ -43,6 +44,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const { t } = useTranslation();
 
   // Get the page parameter for back navigation
   const backPage = Array.isArray(searchParams.get("page"))
@@ -57,17 +59,17 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
     : searchParams.get("search_page");
 
   let backUrl = "/quotes";
-  let backText = "Back to Quotes";
+  let backText = t("common.backToQuotes");
 
   if (fromSearch && searchQuery) {
     const urlParams = new URLSearchParams();
     urlParams.set("q", searchQuery);
     if (searchPage) urlParams.set("page", searchPage);
     backUrl = `/search?${urlParams.toString()}`;
-    backText = `Back to Search Results`;
+    backText = t("common.backToSearchResults");
   } else if (backPage) {
     backUrl = `/quotes?page=${backPage}`;
-    backText = `Back to Quotes (Page ${backPage})`;
+    backText = `${t("common.backToQuotes")} (${t("common.page")} ${backPage})`;
   }
 
   const utils = api.useUtils();
@@ -120,11 +122,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
   });
 
   const handleDelete = () => {
-    if (
-      confirm(
-        "Are you sure you want to delete this quote? This action cannot be undone.",
-      )
-    ) {
+    if (confirm(t("quotes.deleteConfirm"))) {
       deleteQuote.mutate({ id: quoteId });
     }
   };
@@ -158,7 +156,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
   if (!quote) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-400">Quote not found.</p>
+        <p className="text-gray-400">{t("common.quoteNotFound")}</p>
       </div>
     );
   }
@@ -208,7 +206,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
                 }).toString()}`}
                 className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
               >
-                Edit Quote
+                {t("quotes.editQuote")}
               </Link>
             )}
             {canDelete && (
@@ -217,7 +215,9 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
                 disabled={deleteQuote.isPending}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:bg-gray-600"
               >
-                {deleteQuote.isPending ? "Deleting..." : "Delete Quote"}
+                {deleteQuote.isPending
+                  ? t("common.deleting")
+                  : t("quotes.deleteQuote")}
               </button>
             )}
           </div>
@@ -259,7 +259,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
             <span>
-              Submitted by{" "}
+              {t("quotes.submittedBy")}{" "}
               <Link
                 href={`/profile/${quote.submittedById}`}
                 className="font-medium text-purple-300 hover:text-purple-200"

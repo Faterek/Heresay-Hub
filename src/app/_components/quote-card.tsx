@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Quote } from "~/types";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface QuoteCardProps {
   quote: Quote;
@@ -9,6 +10,7 @@ interface QuoteCardProps {
 }
 
 export function QuoteCard({ quote, showSubmittedBy = true }: QuoteCardProps) {
+  const { t } = useTranslation();
   const formatDate = (dateString: string | null, precision: string | null) => {
     if (!dateString || precision === "unknown") return null;
 
@@ -66,18 +68,18 @@ export function QuoteCard({ quote, showSubmittedBy = true }: QuoteCardProps) {
   const speakerNames = speakers.map((s) => s.name).join(" & ");
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 p-6 transition-colors hover:bg-white/10">
+    <div className="rounded-lg border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10">
       {/* Quote Content - clickable area for quote details */}
       <Link href={`/quotes/${quote.id}`} className="block">
         <div className="cursor-pointer">
-          <blockquote className="mb-4 text-lg italic text-gray-100">
+          <blockquote className="mb-3 text-base text-gray-100 italic">
             &ldquo;{quote.content}&rdquo;
           </blockquote>
 
           {/* Speaker and Date */}
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <span className="font-medium text-purple-300">
-              — {speakerNames || "Unknown Speaker"}
+              — {speakerNames || t("quotes.unknownSpeaker")}
             </span>
             {quote.quoteDate && (
               <span className="text-sm text-gray-400">
@@ -88,9 +90,11 @@ export function QuoteCard({ quote, showSubmittedBy = true }: QuoteCardProps) {
 
           {/* Context (if provided) */}
           {quote.context && (
-            <div className="mb-4 rounded-md bg-white/5 p-3">
+            <div className="mb-3 rounded-md bg-white/5 p-2">
               <p className="text-sm text-gray-300">
-                <span className="font-medium text-gray-200">Context:</span>{" "}
+                <span className="font-medium text-gray-200">
+                  {t("quotes.context")}:
+                </span>{" "}
                 {quote.context}
               </p>
             </div>
@@ -99,12 +103,12 @@ export function QuoteCard({ quote, showSubmittedBy = true }: QuoteCardProps) {
       </Link>
 
       {/* Metadata section - outside the main link to avoid nesting */}
-      <div className="mt-3 border-t border-white/10 pt-3">
+      <div className="mt-2 border-t border-white/10 pt-2">
         <div className="flex items-center justify-between text-xs text-gray-400">
           <div className="flex items-center space-x-4">
             {showSubmittedBy && quote.submittedBy && (
               <span>
-                Submitted by{" "}
+                {t("quotes.submittedBy")}{" "}
                 <Link
                   href={`/profile/${quote.submittedById}`}
                   className="font-medium text-purple-300 hover:text-purple-200"

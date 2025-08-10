@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
+import { useTranslation } from "~/hooks/useI18n";
 
 // Helper function to format dates based on precision
 function formatQuoteDate(
@@ -55,6 +56,7 @@ interface YearSectionProps {
 }
 
 function YearSection({ year, isExpanded = false }: YearSectionProps) {
+  const { t } = useTranslation();
   const [showBest, setShowBest] = useState(true);
   const limit = isExpanded ? 50 : 10;
 
@@ -87,7 +89,9 @@ function YearSection({ year, isExpanded = false }: YearSectionProps) {
     return (
       <div className="rounded-lg bg-white/5 p-6">
         <h3 className="mb-4 text-xl font-semibold text-white">{year}</h3>
-        <p className="text-red-400">Error loading quotes: {error.message}</p>
+        <p className="text-red-400">
+          {t("common.errorLoading")}: {error.message}
+        </p>
       </div>
     );
   }
@@ -96,7 +100,7 @@ function YearSection({ year, isExpanded = false }: YearSectionProps) {
     return (
       <div className="rounded-lg bg-white/5 p-6">
         <h3 className="mb-4 text-xl font-semibold text-white">{year}</h3>
-        <p className="text-gray-400">No quotes found for this year.</p>
+        <p className="text-gray-400">{t("ranking.noQuotesForYear")}</p>
       </div>
     );
   }
@@ -121,7 +125,7 @@ function YearSection({ year, isExpanded = false }: YearSectionProps) {
                 : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
-            Best ({bestQuotes.length})
+            {t("ranking.best")} ({bestQuotes.length})
           </button>
           <button
             onClick={() => setShowBest(false)}
@@ -131,7 +135,7 @@ function YearSection({ year, isExpanded = false }: YearSectionProps) {
                 : "bg-gray-700 text-gray-300 hover:bg-gray-600"
             }`}
           >
-            Worst ({worstQuotes.length})
+            {t("ranking.worst")} ({worstQuotes.length})
           </button>
         </div>
       </div>
@@ -163,7 +167,7 @@ function YearSection({ year, isExpanded = false }: YearSectionProps) {
                 </div>
               </div>
 
-              <blockquote className="mb-3 text-base italic text-white">
+              <blockquote className="mb-3 text-base text-white italic">
                 &ldquo;{quote.content}&rdquo;
               </blockquote>
 
@@ -188,7 +192,10 @@ function YearSection({ year, isExpanded = false }: YearSectionProps) {
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span>by {quote.submittedBy.name ?? "Anonymous"}</span>
+                  <span>
+                    {t("quotes.by")}{" "}
+                    {quote.submittedBy.name ?? t("common.anonymous")}
+                  </span>
                   <span>{new Date(quote.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
@@ -201,6 +208,7 @@ function YearSection({ year, isExpanded = false }: YearSectionProps) {
 }
 
 export function QuoteRanking() {
+  const { t } = useTranslation();
   const [showAllYears, setShowAllYears] = useState(false);
   const currentYear = new Date().getFullYear();
 
@@ -211,8 +219,10 @@ export function QuoteRanking() {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="mb-4 text-4xl font-bold text-white">Quote Rankings</h1>
-          <p className="text-gray-400">Loading years...</p>
+          <h1 className="mb-4 text-4xl font-bold text-white">
+            {t("ranking.title")}
+          </h1>
+          <p className="text-gray-400">{t("ranking.loadingYears")}</p>
         </div>
       </div>
     );
@@ -222,8 +232,10 @@ export function QuoteRanking() {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="mb-4 text-4xl font-bold text-white">Quote Rankings</h1>
-          <p className="text-gray-400">No quotes available for ranking.</p>
+          <h1 className="mb-4 text-4xl font-bold text-white">
+            {t("ranking.title")}
+          </h1>
+          <p className="text-gray-400">{t("ranking.noQuotesAvailable")}</p>
         </div>
       </div>
     );
@@ -237,17 +249,18 @@ export function QuoteRanking() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold text-white">Quote Rankings</h1>
-        <p className="mb-6 text-gray-400">
-          Best and worst quotes by year, ranked by community votes
-        </p>
+        <h1 className="mb-4 text-4xl font-bold text-white">
+          {t("ranking.title")}
+        </h1>
+        <p className="mb-6 text-gray-400">{t("ranking.description")}</p>
 
         {!showAllYears && availableYears.length > yearsToShow.length && (
           <button
             onClick={() => setShowAllYears(true)}
             className="rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
           >
-            Show All Years ({availableYears.length} total)
+            {t("ranking.showAllYears")} ({availableYears.length}{" "}
+            {t("common.total")})
           </button>
         )}
 
@@ -256,7 +269,7 @@ export function QuoteRanking() {
             onClick={() => setShowAllYears(false)}
             className="rounded-lg bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
           >
-            Show Recent Years Only
+            {t("ranking.showRecentYearsOnly")}
           </button>
         )}
       </div>

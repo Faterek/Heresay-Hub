@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api } from "~/trpc/react";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface QuoteVotingProps {
   quoteId: number;
@@ -15,13 +16,16 @@ interface VoterTooltipProps {
 }
 
 function VoterTooltip({ voters, voteType, onShowAll }: VoterTooltipProps) {
+  const { t } = useTranslation();
   const displayVoters = voters.slice(0, 5); // Show first 5
   const hasMore = voters.length > 5;
 
   return (
     <div className="absolute bottom-full left-1/2 z-50 mb-2 min-w-48 -translate-x-1/2 rounded-lg bg-gray-900 p-3 text-sm shadow-lg">
       <div className="mb-2 font-medium text-white">
-        {voteType === "upvote" ? "Upvoted by:" : "Downvoted by:"}
+        {voteType === "upvote"
+          ? t("quotes.upvotedBy")
+          : t("quotes.downvotedBy")}
       </div>
       <div className="space-y-1">
         {displayVoters.map((voter) => (

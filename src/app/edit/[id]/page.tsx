@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { auth } from "~/server/auth";
 import { EditQuoteForm } from "~/app/_components/edit-quote-form";
 import { PageLayout } from "~/app/_components/page-layout";
+import { SignInRequiredEdit } from "~/app/_components/sign-in-required-edit";
 
 interface EditQuotePageProps {
   params: Promise<{
@@ -32,18 +32,7 @@ export default async function EditQuotePage({
   if (!session?.user) {
     return (
       <PageLayout>
-        <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-          <h1 className="mb-4 text-4xl font-bold">Sign In Required</h1>
-          <p className="mb-8 text-xl text-gray-300">
-            You need to sign in to edit quotes.
-          </p>
-          <Link
-            href="/api/auth/signin"
-            className="rounded-lg bg-purple-600 px-8 py-3 font-medium transition-colors hover:bg-purple-700"
-          >
-            Sign in with Discord
-          </Link>
-        </div>
+        <SignInRequiredEdit />
       </PageLayout>
     );
   }

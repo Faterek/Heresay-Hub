@@ -6,10 +6,12 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { api } from "~/trpc/react";
 import { QuoteCard } from "~/app/_components/quote-card";
+import { useTranslation } from "~/hooks/useI18n";
 
 export function MyProfile() {
   const [currentPage, setCurrentPage] = useState(1);
   const { data: session } = useSession();
+  const { t } = useTranslation();
 
   const { data: myProfile, isLoading: profileLoading } =
     api.user.getMyProfile.useQuery();
@@ -22,15 +24,15 @@ export function MyProfile() {
   if (!session?.user) {
     return (
       <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center">
-        <h2 className="text-lg font-semibold text-red-400">Access Denied</h2>
-        <p className="mt-2 text-red-300">
-          You need to be signed in to view your profile.
-        </p>
+        <h2 className="text-lg font-semibold text-red-400">
+          {t("errors.accessDenied")}
+        </h2>
+        <p className="mt-2 text-red-300">{t("errors.pleaseSignIn")}</p>
         <Link
           href="/api/auth/signin"
           className="mt-4 inline-block rounded-md bg-purple-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-700"
         >
-          Sign In
+          {t("navigation.signIn")}
         </Link>
       </div>
     );
@@ -48,7 +50,7 @@ export function MyProfile() {
     return (
       <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center">
         <h2 className="text-lg font-semibold text-red-400">
-          Profile Not Found
+          {t("common.profileNotFound")}
         </h2>
         <p className="mt-2 text-red-300">
           There was an error loading your profile.
@@ -83,13 +85,13 @@ export function MyProfile() {
           <div className="flex-1">
             <div className="flex items-center space-x-3">
               <h1 className="text-2xl font-bold text-white">
-                {myProfile.name ?? "Anonymous User"}
+                {myProfile.name ?? t("errors.anonymousUser")}
               </h1>
               <span className="rounded-full bg-purple-600/20 px-3 py-1 text-xs font-medium text-purple-300">
                 {myProfile.role}
               </span>
               <span className="rounded-full bg-blue-600/20 px-3 py-1 text-xs font-medium text-blue-300">
-                You
+                {t("common.you")}
               </span>
             </div>
 
@@ -102,20 +104,26 @@ export function MyProfile() {
                   {myProfile.stats.quotesCount}
                 </div>
                 <div className="text-sm text-gray-400">
-                  Quote{myProfile.stats.quotesCount !== 1 ? "s" : ""}
+                  {myProfile.stats.quotesCount === 1
+                    ? t("common.quote")
+                    : t("common.quotes")}
                 </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-400">
                   {myProfile.stats.totalUpvotes}
                 </div>
-                <div className="text-sm text-gray-400">Upvotes</div>
+                <div className="text-sm text-gray-400">
+                  {t("common.upvotes")}
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-400">
                   {myProfile.stats.totalDownvotes}
                 </div>
-                <div className="text-sm text-gray-400">Downvotes</div>
+                <div className="text-sm text-gray-400">
+                  {t("common.downvotes")}
+                </div>
               </div>
               <div className="text-center">
                 <div
@@ -128,7 +136,9 @@ export function MyProfile() {
                   {myProfile.stats.netScore > 0 ? "+" : ""}
                   {myProfile.stats.netScore}
                 </div>
-                <div className="text-sm text-gray-400">Net Score</div>
+                <div className="text-sm text-gray-400">
+                  {t("quotes.netScore")}
+                </div>
               </div>
             </div>
           </div>
@@ -141,23 +151,23 @@ export function MyProfile() {
           href="/submit"
           className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-700"
         >
-          Submit New Quote
+          {t("common.submitNewQuote")}
         </Link>
         <Link
           href="/quotes"
           className="rounded-md border border-purple-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-600/10"
         >
-          Browse All Quotes
+          {t("common.browseAllQuotes")}
         </Link>
       </div>
 
       {/* User's Quotes Section */}
       <div>
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">My Quotes</h2>
+          <h2 className="text-xl font-semibold">{t("common.myQuotes")}</h2>
           {myProfile.stats.quotesCount > 0 && (
             <span className="text-sm text-gray-400">
-              {myProfile.stats.quotesCount} total
+              {myProfile.stats.quotesCount} {t("common.total")}
             </span>
           )}
         </div>
@@ -186,21 +196,19 @@ export function MyProfile() {
                   onClick={() => setCurrentPage(currentPage + 1)}
                   className="rounded-md bg-purple-600/80 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-600"
                 >
-                  Load More
+                  {t("common.loadMore")}
                 </button>
               </div>
             )}
           </div>
         ) : (
           <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center">
-            <p className="text-gray-400">
-              You haven&apos;t submitted any quotes yet.
-            </p>
+            <p className="text-gray-400">{t("profile.noQuotesYet")}</p>
             <Link
               href="/submit"
               className="mt-4 inline-block rounded-md bg-purple-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-700"
             >
-              Submit Your First Quote
+              {t("common.submitFirstQuote")}
             </Link>
           </div>
         )}

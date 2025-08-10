@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api } from "~/trpc/react";
 import type { Quote } from "~/types";
 import { QuoteVoting } from "./quote-voting";
+import { useTranslation } from "~/hooks/useI18n";
 
 // Helper function to format dates based on precision
 function formatQuoteDate(
@@ -39,8 +40,9 @@ function formatQuoteDate(
 }
 
 export function RecentQuotes() {
+  const { t } = useTranslation();
   const {
-    data: quotes,
+    data: quotesData,
     isLoading,
     error,
   } = api.quote.getAll.useQuery(
@@ -56,10 +58,14 @@ export function RecentQuotes() {
     },
   );
 
+  const quotes = quotesData?.quotes;
+
   if (isLoading) {
     return (
       <div className="w-full max-w-4xl">
-        <h2 className="mb-6 text-center text-3xl font-bold">Recent Quotes</h2>
+        <h2 className="mb-6 text-center text-3xl font-bold">
+          {t("quotes.recentQuotes")}
+        </h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="animate-pulse rounded-lg bg-white/10 p-4">
@@ -76,18 +82,20 @@ export function RecentQuotes() {
   if (error) {
     return (
       <div className="w-full max-w-4xl text-center">
-        <h2 className="mb-6 text-3xl font-bold">Recent Quotes</h2>
+        <h2 className="mb-6 text-3xl font-bold">{t("quotes.recentQuotes")}</h2>
         <p className="text-red-400">Error loading quotes: {error.message}</p>
       </div>
     );
   }
 
-  if (!quotes || quotes.length === 0) {
+  if (!quotesData || !quotes || quotes.length === 0) {
     return (
       <div className="w-full max-w-4xl text-center">
-        <h2 className="mb-6 text-3xl font-bold">Recent Quotes</h2>
+        <h2 className="mb-6 text-3xl font-bold">{t("quotes.recentQuotes")}</h2>
         <div className="rounded-lg bg-white/10 p-8">
-          <p className="mb-4 text-lg text-gray-400">No quotes found.</p>
+          <p className="mb-4 text-lg text-gray-400">
+            {t("common.noQuotesFound")}
+          </p>
           <p className="text-gray-500">
             Be the first to submit a memorable quote!
           </p>
@@ -99,12 +107,12 @@ export function RecentQuotes() {
   return (
     <div className="w-full max-w-4xl">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-3xl font-bold">Recent Quotes</h2>
+        <h2 className="text-3xl font-bold">{t("quotes.recentQuotes")}</h2>
         <Link
           href="/quotes"
           className="font-medium text-purple-400 transition-colors hover:text-purple-300"
         >
-          View All →
+          {t("home.viewAll")} →
         </Link>
       </div>
 
@@ -120,7 +128,7 @@ export function RecentQuotes() {
             href="/quotes"
             className="inline-flex items-center rounded-lg bg-purple-600 px-6 py-3 font-medium transition-colors hover:bg-purple-700"
           >
-            View All Quotes
+            {t("home.viewAllQuotes")}
           </Link>
         </div>
       )}
@@ -181,7 +189,7 @@ const QuoteCard = memo(function QuoteCard({ quote }: { quote: Quote }) {
       </div>
 
       {/* Voting section - outside the link to prevent conflicts */}
-      <div className="mt-3 border-t border-white/20 pt-3">
+      <div className="mt-2 border-t border-white/20 pt-2">
         <QuoteVoting quoteId={quote.id} />
       </div>
     </div>

@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface QuickSearchProps {
   placeholder?: string;
   className?: string;
 }
 
-export function QuickSearch({
-  placeholder = "Search quotes...",
-  className = "",
-}: QuickSearchProps) {
+export function QuickSearch({ placeholder, className = "" }: QuickSearchProps) {
   const [query, setQuery] = useState("");
   const router = useRouter();
+  const { t } = useTranslation();
+
+  const defaultPlaceholder = placeholder ?? t("search.searchPlaceholder");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +46,7 @@ export function QuickSearch({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
+          placeholder={defaultPlaceholder}
           className="block w-full rounded-lg border border-white/20 bg-white/10 py-3 pl-10 pr-3 leading-5 text-white placeholder-gray-400 transition-colors hover:bg-white/15 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 sm:text-sm"
         />
         {query && (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
+import { useTranslation } from "~/hooks/useI18n";
 
 export function SubmitQuoteForm() {
   const [content, setContent] = useState("");
@@ -15,6 +16,7 @@ export function SubmitQuoteForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
+  const { t } = useTranslation();
 
   const { data: speakers, isLoading: speakersLoading } =
     api.speaker.getAll.useQuery();
@@ -84,60 +86,56 @@ export function SubmitQuoteForm() {
         {/* Quote Content */}
         <div>
           <label htmlFor="content" className="mb-2 block text-lg font-medium">
-            Quote
+            {t("quotes.quoteContent")}
           </label>
           <textarea
             id="content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Enter the memorable quote here..."
-            className="h-32 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder={t("quotes.quoteContentPlaceholder")}
+            className="h-32 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
             maxLength={2000}
             required
           />
           <div className="mt-1 text-right text-sm text-gray-400">
-            {content.length}/2000 characters
+            {content.length}/2000 {t("common.characters")}
           </div>
         </div>
 
         {/* Context Field */}
         <div>
           <label htmlFor="context" className="mb-2 block text-lg font-medium">
-            Context{" "}
+            {t("quotes.context")}{" "}
             <span className="text-sm font-normal text-gray-400">
-              (Optional)
+              ({t("common.optional")})
             </span>
           </label>
           <textarea
             id="context"
             value={context}
             onChange={(e) => setContext(e.target.value)}
-            placeholder="Add context about when, where, or why this was said..."
-            className="h-24 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder={t("quotes.contextPlaceholder")}
+            className="h-24 w-full resize-y rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
             maxLength={1000}
           />
           <div className="mt-1 text-right text-sm text-gray-400">
-            {context.length}/1000 characters
+            {context.length}/1000 {t("common.characters")}
           </div>
-          <p className="mt-1 text-sm text-gray-400">
-            Context will only be visible when viewing individual quotes, not in
-            the main feed.
-          </p>
         </div>
 
         {/* Quote Date */}
         <div>
           <label className="mb-3 block text-lg font-medium">
-            Date{" "}
+            {t("quotes.date")}{" "}
             <span className="text-sm font-normal text-gray-400">
-              (Optional)
+              ({t("common.optional")})
             </span>
           </label>
 
           {/* Date Precision Selection */}
           <div className="mb-4 space-y-2">
             <label className="text-sm font-medium text-gray-300">
-              Date Precision
+              {t("quotes.datePrecision")}
             </label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <label className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/20 bg-white/5 p-3 transition-colors hover:bg-white/10">
@@ -152,7 +150,7 @@ export function SubmitQuoteForm() {
                   }}
                   className="text-purple-600 focus:ring-purple-500"
                 />
-                <span className="text-sm">Unknown</span>
+                <span className="text-sm">{t("quotes.precisionUnknown")}</span>
               </label>
 
               <label className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/20 bg-white/5 p-3 transition-colors hover:bg-white/10">
@@ -169,7 +167,7 @@ export function SubmitQuoteForm() {
                   }}
                   className="text-purple-600 focus:ring-purple-500"
                 />
-                <span className="text-sm">Year only</span>
+                <span className="text-sm">{t("quotes.precisionYear")}</span>
               </label>
 
               <label className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/20 bg-white/5 p-3 transition-colors hover:bg-white/10">
@@ -183,7 +181,9 @@ export function SubmitQuoteForm() {
                   }}
                   className="text-purple-600 focus:ring-purple-500"
                 />
-                <span className="text-sm">Year & Month</span>
+                <span className="text-sm">
+                  {t("quotes.precisionYearMonth")}
+                </span>
               </label>
 
               <label className="flex cursor-pointer items-center space-x-2 rounded-lg border border-white/20 bg-white/5 p-3 transition-colors hover:bg-white/10">
@@ -197,7 +197,7 @@ export function SubmitQuoteForm() {
                   }}
                   className="text-purple-600 focus:ring-purple-500"
                 />
-                <span className="text-sm">Full date</span>
+                <span className="text-sm">{t("quotes.precisionFull")}</span>
               </label>
             </div>
           </div>
@@ -206,12 +206,12 @@ export function SubmitQuoteForm() {
           {quoteDatePrecision === "year" && (
             <input
               type="number"
-              placeholder="2024"
+              placeholder={t("quotes.dateYearPlaceholder")}
               min="1900"
               max="2100"
               value={quoteDate}
               onChange={(e) => setQuoteDate(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           )}
 
@@ -221,7 +221,7 @@ export function SubmitQuoteForm() {
               id="quoteDate"
               value={quoteDate}
               onChange={(e) => setQuoteDate(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           )}
 
@@ -231,23 +231,25 @@ export function SubmitQuoteForm() {
               id="quoteDate"
               value={quoteDate}
               onChange={(e) => setQuoteDate(e.target.value)}
-              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
           )}
 
           {quoteDatePrecision === "unknown" && (
-            <div className="rounded-lg bg-white/5 p-3 text-sm italic text-gray-400">
-              Date information is unknown or not specified
+            <div className="rounded-lg bg-white/5 p-3 text-sm text-gray-400 italic">
+              {t("quotes.dateUnknownMessage")}
             </div>
           )}
         </div>
 
         {/* Speaker Selection */}
         <div>
-          <label className="mb-2 block text-lg font-medium">Speakers</label>
+          <label className="mb-2 block text-lg font-medium">
+            {t("quotes.speaker")}
+          </label>
           {speakersLoading ? (
             <div className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-gray-400">
-              Loading speakers...
+              {t("common.loading")}
             </div>
           ) : (
             <>
@@ -255,7 +257,7 @@ export function SubmitQuoteForm() {
               {speakerIds.length > 0 && (
                 <div className="mb-4">
                   <p className="mb-2 text-sm text-gray-300">
-                    Selected speakers:
+                    {t("quotes.selectedSpeakers")}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {speakerIds.map((id) => {
@@ -296,12 +298,12 @@ export function SubmitQuoteForm() {
                     }
                   }
                 }}
-                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-transparent focus:ring-2 focus:ring-purple-500 focus:outline-none"
               >
                 <option value="" className="bg-gray-800">
                   {speakerIds.length === 0
-                    ? "Select speakers..."
-                    : "Add another speaker..."}
+                    ? t("quotes.selectSpeakers")
+                    : t("quotes.addAnotherSpeaker")}
                 </option>
                 {speakers
                   ?.filter((speaker) => !speakerIds.includes(speaker.id))
@@ -318,9 +320,9 @@ export function SubmitQuoteForm() {
             </>
           )}
           <p className="mt-1 text-sm text-gray-400">
-            Don&apos;t see the speaker you&apos;re looking for?{" "}
+            {t("quotes.speakerNotFound")}{" "}
             <span className="text-purple-400">
-              Contact a moderator to add them.
+              {t("quotes.contactModerator")}
             </span>
           </p>
         </div>
@@ -328,7 +330,9 @@ export function SubmitQuoteForm() {
         {/* Error Message */}
         {createQuote.error && (
           <div className="rounded-lg border border-red-600/50 bg-red-600/20 p-4">
-            <p className="text-red-300">Error: {createQuote.error.message}</p>
+            <p className="text-red-300">
+              {t("common.errorLabel")} {createQuote.error.message}
+            </p>
           </div>
         )}
 
@@ -339,14 +343,14 @@ export function SubmitQuoteForm() {
             disabled={!isFormValid || isSubmitting || speakersLoading}
             className="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-gray-600"
           >
-            {isSubmitting ? "Submitting..." : "Submit Quote"}
+            {isSubmitting ? t("quotes.submitting") : t("quotes.submitQuote")}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
             className="rounded-lg bg-gray-600 px-6 py-3 font-medium transition-colors hover:bg-gray-700"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       </form>

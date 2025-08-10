@@ -3,6 +3,7 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import { UsersList } from "~/app/_components/users-list";
 import { PageLayout } from "~/app/_components/page-layout";
+import { UsersPageHeader } from "~/app/_components/users-page-header";
 
 export default async function UsersPage() {
   const session = await auth();
@@ -16,12 +17,7 @@ export default async function UsersPage() {
     <HydrateClient>
       <PageLayout>
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">Community Members</h1>
-            <p className="mt-2 text-gray-400">
-              Discover other users and see their quotes
-            </p>
-          </div>
+          <UsersPageHeader />
 
           <Suspense
             fallback={

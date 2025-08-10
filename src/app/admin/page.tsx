@@ -24,15 +24,6 @@ export default async function AdminPage() {
     <HydrateClient>
       <PageLayout>
         <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="mb-2 text-4xl font-bold">Admin Panel</h1>
-            <p className="text-gray-300">
-              Manage users and view system statistics
-            </p>
-          </div>
-
-          {/* Admin Panel */}
           <AdminPanel
             userRole={session.user.role}
             currentUserId={session.user.id}

@@ -1,13 +1,8 @@
 import { z } from "zod";
-import { eq, and, sql, desc, inArray } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import {
-  quotes,
-  quoteVotes,
-  quoteSpeakers,
-  speakers,
-} from "~/server/db/schema";
+import { quotes, quoteVotes, quoteSpeakers } from "~/server/db/schema";
 
 export const quoteRouter = createTRPCRouter({
   getAll: protectedProcedure
@@ -22,6 +17,12 @@ export const quoteRouter = createTRPCRouter({
     .query(async ({ ctx, input = {} }) => {
       const { limit = 20, page = 1 } = input;
       const offset = (page - 1) * limit;
+
+      // Get total count for pagination
+      const totalCount = await ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(quotes)
+        .then((result) => result[0]?.count ?? 0);
 
       const allQuotes = await ctx.db.query.quotes.findMany({
         orderBy: (quotes, { desc }) => [desc(quotes.createdAt)],
@@ -56,7 +57,19 @@ export const quoteRouter = createTRPCRouter({
         },
       });
 
-      return allQuotes;
+      const totalPages = Math.ceil(totalCount / limit);
+
+      return {
+        quotes: allQuotes,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      };
     }),
 
   getLatest: protectedProcedure.query(async ({ ctx }) => {

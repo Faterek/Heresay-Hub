@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { api } from "~/trpc/react";
 import { QuoteVoting } from "./quote-voting";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface QuoteDetailProps {
   quoteId: number;
@@ -43,6 +44,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const { t } = useTranslation();
 
   // Get the page parameter for back navigation
   const backPage = Array.isArray(searchParams.get("page"))
@@ -158,7 +160,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
   if (!quote) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-400">Quote not found.</p>
+        <p className="text-gray-400">{t("common.quoteNotFound")}</p>
       </div>
     );
   }
@@ -217,7 +219,9 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
                 disabled={deleteQuote.isPending}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:bg-gray-600"
               >
-                {deleteQuote.isPending ? "Deleting..." : "Delete Quote"}
+                {deleteQuote.isPending
+                  ? t("quotes.deleting")
+                  : t("quotes.deleteQuote")}
               </button>
             )}
           </div>
@@ -232,7 +236,7 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
             <span className="font-medium text-white">
               —{" "}
               {quote.quoteSpeakers?.map((qs) => qs.speaker.name).join(" & ") ??
-                "Unknown Speaker"}
+                t("quotes.unknownSpeaker")}
               {quote.quoteDate && quote.quoteDatePrecision !== "unknown" && (
                 <span className="text-gray-400">
                   , {formatQuoteDate(quote.quoteDate, quote.quoteDatePrecision)}
@@ -259,12 +263,12 @@ export function QuoteDetail({ quoteId }: QuoteDetailProps) {
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
             <span>
-              Submitted by{" "}
+              {t("quotes.submittedBy")}{" "}
               <Link
                 href={`/profile/${quote.submittedById}`}
                 className="font-medium text-purple-300 hover:text-purple-200"
               >
-                {quote.submittedBy.name ?? "Unknown User"}
+                {quote.submittedBy.name ?? t("quotes.unknownUser")}
               </Link>
             </span>
             <span>•</span>

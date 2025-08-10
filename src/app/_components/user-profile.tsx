@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { api } from "~/trpc/react";
 import { QuoteCard } from "~/app/_components/quote-card";
+import { useTranslation } from "~/hooks/useI18n";
 
 interface UserProfileProps {
   userId: string;
@@ -13,6 +14,7 @@ interface UserProfileProps {
 
 export function UserProfile({ userId }: UserProfileProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const { t } = useTranslation();
   const { data: session } = useSession();
 
   const {
@@ -40,7 +42,9 @@ export function UserProfile({ userId }: UserProfileProps) {
   if (profileError || !userProfile) {
     return (
       <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-6 text-center">
-        <h2 className="text-lg font-semibold text-red-400">User Not Found</h2>
+        <h2 className="text-lg font-semibold text-red-400">
+          {t("common.userNotFound")}
+        </h2>
         <p className="mt-2 text-red-300">
           The user you&apos;re looking for doesn&apos;t exist or may have been
           removed.
@@ -49,7 +53,7 @@ export function UserProfile({ userId }: UserProfileProps) {
           href="/quotes"
           className="mt-4 inline-block rounded-md bg-purple-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-700"
         >
-          Back to Quotes
+          {t("common.backToQuotes")}
         </Link>
       </div>
     );
@@ -88,7 +92,7 @@ export function UserProfile({ userId }: UserProfileProps) {
               </span>
               {isOwnProfile && (
                 <span className="rounded-full bg-blue-600/20 px-3 py-1 text-xs font-medium text-blue-300">
-                  You
+                  {t("common.you")}
                 </span>
               )}
             </div>
@@ -100,20 +104,26 @@ export function UserProfile({ userId }: UserProfileProps) {
                   {userProfile.stats.quotesCount}
                 </div>
                 <div className="text-sm text-gray-400">
-                  Quote{userProfile.stats.quotesCount !== 1 ? "s" : ""}
+                  {userProfile.stats.quotesCount === 1
+                    ? t("common.quote")
+                    : t("common.quotes")}
                 </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-400">
                   {userProfile.stats.totalUpvotes}
                 </div>
-                <div className="text-sm text-gray-400">Upvotes</div>
+                <div className="text-sm text-gray-400">
+                  {t("common.upvotes")}
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-400">
                   {userProfile.stats.totalDownvotes}
                 </div>
-                <div className="text-sm text-gray-400">Downvotes</div>
+                <div className="text-sm text-gray-400">
+                  {t("common.downvotes")}
+                </div>
               </div>
               <div className="text-center">
                 <div
@@ -126,7 +136,9 @@ export function UserProfile({ userId }: UserProfileProps) {
                   {userProfile.stats.netScore > 0 ? "+" : ""}
                   {userProfile.stats.netScore}
                 </div>
-                <div className="text-sm text-gray-400">Net Score</div>
+                <div className="text-sm text-gray-400">
+                  {t("common.netScore")}
+                </div>
               </div>
             </div>
           </div>
@@ -140,13 +152,13 @@ export function UserProfile({ userId }: UserProfileProps) {
             href="/submit"
             className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-700"
           >
-            Submit New Quote
+            {t("common.submitNewQuote")}
           </Link>
           <Link
             href="/profile/my-quotes"
             className="rounded-md border border-purple-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-600/10"
           >
-            Manage My Quotes
+            {t("navigation.manageMyQuotes")}
           </Link>
         </div>
       )}
@@ -155,11 +167,13 @@ export function UserProfile({ userId }: UserProfileProps) {
       <div>
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">
-            {isOwnProfile ? "My Quotes" : `${userProfile.name}'s Quotes`}
+            {isOwnProfile
+              ? t("common.myQuotes")
+              : `${userProfile.name}'s ${t("common.quotes")}`}
           </h2>
           {userProfile.stats.quotesCount > 0 && (
             <span className="text-sm text-gray-400">
-              {userProfile.stats.quotesCount} total
+              {userProfile.stats.quotesCount} {t("common.total")}
             </span>
           )}
         </div>
@@ -185,7 +199,7 @@ export function UserProfile({ userId }: UserProfileProps) {
                   onClick={() => setCurrentPage(currentPage + 1)}
                   className="rounded-md bg-purple-600/80 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-600"
                 >
-                  Load More
+                  {t("common.loadMore")}
                 </button>
               </div>
             )}
@@ -194,15 +208,15 @@ export function UserProfile({ userId }: UserProfileProps) {
           <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center">
             <p className="text-gray-400">
               {isOwnProfile
-                ? "You haven&apos;t submitted any quotes yet."
-                : `${userProfile.name} hasn&apos;t submitted any quotes yet.`}
+                ? t("profile.noQuotesYet")
+                : `${userProfile.name} ${t("profile.hasntSubmittedQuotesYet")}`}
             </p>
             {isOwnProfile && (
               <Link
                 href="/submit"
                 className="mt-4 inline-block rounded-md bg-purple-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-purple-700"
               >
-                Submit Your First Quote
+                {t("common.submitFirstQuote")}
               </Link>
             )}
           </div>
